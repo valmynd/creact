@@ -32,16 +32,13 @@ export function create(virtual_node) {
     component = instantiate(virtual_node)
     virtual_node = render(component)
   }
-  let tag = virtual_node.tag, children = virtual_node.children, attributes = virtual_node.attributes
+  let {tag, children, attributes} = virtual_node
   if (tag === "svg" || tag === "path" || tag === "g" || tag === "text" || tag === "rect")
     element = document.createElementNS("http://www.w3.org/2000/svg", tag)
   else element = document.createElement(tag)
-  if (attributes) {
-    for (let a in attributes) {
-      if (a.startsWith("on")) setListener(element, a.substring(2).toLowerCase(), attributes[a])
-      else element.setAttribute(a, attributes[a])
-    }
-  }
+  if (attributes) for (let a in attributes)
+    if (a.startsWith("on")) setListener(element, a.substring(2).toLowerCase(), attributes[a])
+    else element.setAttribute(a, attributes[a])
   if (children) {
     let frag = document.createDocumentFragment()
     for (let i = 0, nChildren = children.length; i < nChildren; i++) {
@@ -193,13 +190,13 @@ export function merge(virtual_node, dom_node) {
 let _queue = []
 export class Component {
   constructor() {
-    /**
-     * the sole purpose of storing dom_node, attributes and children is to be able to
-     * access them when update() is called! NEVER use them in actual components!
-     * @private
-     */
+    // the sole purpose of storing dom_node, attributes and children is to be able to
+    // access them when update() is called! NEVER use them in actual components!
+    /** @private */
     this._element = null
+    /** @private */
     this._attributes = null
+    /** @private */
     this._children = null
   }
 

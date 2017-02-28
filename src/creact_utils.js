@@ -15,20 +15,14 @@
 export function toString(virtual_node) {
   if (typeof virtual_node.tag === 'function')
     virtual_node = render(instantiate(virtual_node))
-  let tag = virtual_node.tag, children = virtual_node.children, attributes = virtual_node.attributes
+  let {tag, children, attributes} = virtual_node
   let ret = "<" + tag
-  if (attributes) {
-    for (let key in attributes) {
-      if (!key.startsWith("on")) ret += " " + key + '="' + attributes[key] + '"'
-    }
-  }
+  if (attributes) for (let key in attributes)
+    if (!key.startsWith("on")) ret += " " + key + '="' + attributes[key] + '"'
   ret += ">"
-  if (children) {
-    for (let i = 0, n = children.length; i < n; i++) {
-      if (typeof children[i] === "string") ret += children[i]
-      else ret += toString(children[i])
-    }
-  }
+  if (children) for (let c of children)
+    if (typeof c === "string") ret += c
+    else ret += toString(c)
   return ret + "</" + tag + ">"
 }
 
@@ -54,7 +48,7 @@ export function equals(one, other) {
 export function replaceDomNode(old_dom_node, new_dom_node) {
   cleanup(old_dom_node)
   let parent = old_dom_node.parentNode
-  if (parent)  parent.replaceChild(new_dom_node, old_dom_node)
+  if (parent) parent.replaceChild(new_dom_node, old_dom_node)
   return new_dom_node
 }
 
@@ -149,6 +143,6 @@ function cleanup(dom_node) {
     for (let event_name in dom_node._listeners) removeListener(dom_node, event_name)
     delete dom_node._listeners
   }
-  if (dom_node.children) for (var i = 0, n = dom_node.children.length; i < n; i++)
+  if (dom_node.children) for (let i = 0, n = dom_node.children.length; i < n; i++)
     cleanup(dom_node.children[i])
 }
