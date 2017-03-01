@@ -16,6 +16,16 @@ const font_commands = new Map([ // maps to values for the "mathvariant"-attribut
   ["sf", "sans-serif"],
 ])
 
+const other = {
+  "sqrt": {tag: "msqrt", utf8: "sqrt"}, // 1 parameter
+  "root": {tag: "mroot", utf8: "root"}, // 2 parameters
+  "frac": {tag: "mfrac", utf8: "/"}, // 2 parameters
+  "stackrel": {tag: "mover", utf8: "stackrel"}, // 2 parameters
+  "_": {tag: "msub", utf8: "_"}, // 1 parameter
+  "^": {tag: "msup", utf8: "^"}, // 1 parameter
+  "ubrace": {tag: "munder", utf8: "\u23DF", tex: "underbrace"}, // 1 parameter
+  "obrace": {tag: "mover", utf8: "\u23DE", tex: "overbrace"}, // 1 parameter
+}
 
 
 const simple_ascii2latex_mapping = new Map([

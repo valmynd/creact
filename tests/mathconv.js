@@ -16,5 +16,7 @@ test('Trie works correctly', t => {
 })
 
 test('Ascii2Utf8Parser works correctly', t => {
-  console.log("parse-result:", parser.parse("alpha + beta * kappa"), "vs.", parser.parse("beta ** kappa"))
+  t.deepEqual(parser.parse("alpha + beta * kappa"), ['α', '+', 'β', '⋅', 'κ'])
+  t.deepEqual(parser.parse("beta ** kappa"), ['β', '∗', 'κ'])
+  //console.log("parse-result:", parser.parse("sum_(i=1)^n i^3=((n(n+1))/2)^2"))
 })

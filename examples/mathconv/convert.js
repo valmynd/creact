@@ -1,6 +1,12 @@
 import {Parser} from "./parser"
 const alphanumeric = /[a-zA-Z0-9]/
 
+// non-standard changes (TODO):
+//  - use << instead of (:, >> instead of :)
+//  - use | for something completely different (align!), use : as replacement
+//  - and for ∧, And for ⋀, or for ∨, Or for ⋁
+//  - union for ∩, Union for ⋂, intersect ∪, Intersect ⋃
+
 // triples with ascii-math as first item, utf8 as second item, latex as third item (fallback=first item)
 const _map_func_ascii2utf8 = tuple => [tuple[0], tuple[1] ? tuple[1] : tuple[0]]
 const _map_func_ascii2latex = tuple => [tuple[0], tuple[2] ? tuple[2] : tuple[0]]
@@ -32,7 +38,7 @@ const operation_symbols = [ // tag = "mo"
   ["uuu", "\u22C3", "bigcup"],
 ]
 
-const miscellaneous_symbols = [ // tag = "mo"
+const miscellaneous_symbols = [ // tag = "mo" (maybe except CC etc.?)
   ["int", "\u222B"],
   ["oint", "\u222E"],
   ["del", "\u2202", "partial"],
@@ -148,13 +154,8 @@ const grouping_brackets = [ // tag = "mo"
   ["]"],
   ["{"],
   ["}"],
-  ["|"],
-  ["(:", "\u2329", "langle"],
-  [":)", "\u232A", "rangle"],
-  ["<<", "\u2329"],
-  [">>", "\u232A"],
-  ["{:"],
-  [":}"]
+  ["<<", "\u2329", "langle"],
+  [">>", "\u232A", "rangle"],
 ]
 
 const arrows = [  // tag = "mo"
@@ -206,6 +207,16 @@ const standard_functions = [ // tag = "mo"
   "max"
 ]
 
+const accents = [ // tag is mostly "mover" except for "ul" where tag="munder"
+  ["hat", "\u005E"],
+  ["bar", "\u00AF", "overline"],
+  ["ul", "\u0332", "underline"],
+  ["vec", "\u2192"],
+  ["dot", "."],
+  ["ddot", ".."],
+]
+
+// lists of identifiers, one for every tag that is responsible
 const mi = greek_letters.map(tuple => tuple[0])
 const mo = [
   ...operation_symbols.map(tuple => tuple[0]),
@@ -216,7 +227,17 @@ const mo = [
   ...arrows.map(tuple => tuple[0]),
   ...standard_functions
 ]
-const sorted = [...mo, ...mi].sort((a, b) => b.length - a.length)
+
+const msqrt = ["sqrt"] // unary-prefix operator, e.g. sqrt 24
+const mroot = ["root"] // binary?-operator, e.g. root 24 3
+const msub = ["_"] // unary-prefix-operator, e.g. x_1
+const msup = ["^"] // unary-prefix-operator, e.g. x^1
+// "obrace" takes 1 parameter, the thing under being "\u23DF", "over" takes 2 parameters
+const mover = ["obrace", "over", accents.map(tuple => tuple[0]).filter(name => name !== "ul")]
+// "ubrace" 1 takes parameter, the thing above being "\u23DE",  "under" takes 2 parameters
+const munder = ["ubrace", "under", "ul"]
+const all = [...mo, ...mi, ...msqrt, ...mroot, ...msub, ...msup, ...mover, ...munder]
+const sorted = all.sort((a, b) => b.length - a.length)
 const ascii2utf8map = new Map([
   ...operation_symbols.map(_map_func_ascii2utf8),
   ...miscellaneous_symbols.map(_map_func_ascii2utf8),
@@ -225,9 +246,16 @@ const ascii2utf8map = new Map([
   ...logical_symbols.map(_map_func_ascii2utf8),
   ...grouping_brackets.map(_map_func_ascii2utf8),
   ...arrows.map(_map_func_ascii2utf8),
+  ...accents.map(_map_func_ascii2utf8),
   ...standard_functions.map(s => [s, s])
 ])
 
+const matching_brackets = new Map([
+  ["(", ")"],
+  ["[", "]"],
+  ["{", "}"],
+  ["<<", ">>"],
+])
 
 function _re(string) {
   let r = "^"
@@ -245,9 +273,17 @@ export class Ascii2Utf8Parser extends Parser {
     super()
     for (let key of sorted) {
       const re = _re(key), value = map.get(key)
-      this.literal(re, () => {
-        return value
-      })
+      if(matching_brackets.has(key)) {
+        this._define(re, 10, (...params) => console.log("params0", params), (...params) => console.log("params1", params))
+      }
+      else if(key === "_") {
+        this.unaryPrefix(re, 10, (...params) => console.log("params", params))
+      }
+      else if (mo.includes(key) || mi.includes(key)) {
+        this.literal(re, () => {
+          return value
+        })
+      }
     }
   }
 }

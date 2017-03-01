@@ -136,7 +136,7 @@ export class Parser {
     for (let symbol of this.recognized.values()) {
       matches = symbol.re.exec(s)
       if (matches !== null) {
-        console.log(symbol.re.source, {matches})
+        //console.log(symbol.re.source, {matches})
         let value = matches[0], to = from + value.length
         let token = Object.create(symbol)
         token.value = value
@@ -219,7 +219,7 @@ export class Parser {
    * @returns {Token[]}
    */
   parse(input) {
-    console.log(input, "ignored:", this.ignored, "recognized:", this.recognized)
+    //console.log(input, "ignored:", this.ignored, "recognized:", this.recognized)
     this.src = input
     this.currentToken = null
     this.previousToken = this.advance()
