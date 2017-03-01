@@ -1,8 +1,10 @@
 import {Parser} from "./parser"
+const alphanumeric = /[a-zA-Z0-9]/
 
 // triples with ascii-math as first item, utf8 as second item, latex as third item (fallback=first item)
 const _map_func_ascii2utf8 = tuple => [tuple[0], tuple[1] ? tuple[1] : tuple[0]]
 const _map_func_ascii2latex = tuple => [tuple[0], tuple[2] ? tuple[2] : tuple[0]]
+
 
 const operation_symbols = [ // tag = "mo"
   ["+"],
@@ -204,25 +206,18 @@ const standard_functions = [ // tag = "mo"
   "max"
 ]
 
-const accents = new Map([ // tag is mostly "mover" except for "ul" where tag="munder"
-  ["hat", "\u005E"],
-  ["bar", "\u00AF", "overline"],
-  ["ul", "\u0332", "underline"],
-  ["vec", "\u2192"],
-  ["dot", "."], // will need special treatment?
-  ["ddot", ".."], // will need special treatment?
-])
-
-const font_commands = new Map([ // maps to values for the "mathvariant"-attribute in MathML
-  ["bb", "bold"],
-  ["bbb", "double-struck"],
-  ["cc", "script"],
-  ["tt", "mono"],
-  ["fr", "fraktur"],
-  ["sf", "sans-serif"],
-])
-
-const simple_ascii2utf8_mapping = new Map([
+const mi = greek_letters.map(tuple => tuple[0])
+const mo = [
+  ...operation_symbols.map(tuple => tuple[0]),
+  ...miscellaneous_symbols.map(tuple => tuple[0]),
+  ...relation_symbols.map(tuple => tuple[0]),
+  ...logical_symbols.map(tuple => tuple[0]),
+  ...grouping_brackets.map(tuple => tuple[0]),
+  ...arrows.map(tuple => tuple[0]),
+  ...standard_functions
+]
+const sorted = [...mo, ...mi].sort((a, b) => b.length - a.length)
+const ascii2utf8map = new Map([
   ...operation_symbols.map(_map_func_ascii2utf8),
   ...miscellaneous_symbols.map(_map_func_ascii2utf8),
   ...relation_symbols.map(_map_func_ascii2utf8),
@@ -233,39 +228,25 @@ const simple_ascii2utf8_mapping = new Map([
   ...standard_functions.map(s => [s, s])
 ])
 
-const simple_ascii2latex_mapping = new Map([
-  ...operation_symbols.map(_map_func_ascii2latex),
-  ...miscellaneous_symbols.map(_map_func_ascii2latex),
-  ...relation_symbols.map(_map_func_ascii2latex),
-  ...greek_letters.map(_map_func_ascii2latex),
-  ...logical_symbols.map(_map_func_ascii2latex),
-  ...grouping_brackets.map(_map_func_ascii2latex),
-  ...arrows.map(_map_func_ascii2utf8),
-  ...standard_functions.map(s => [s, s])
-])
 
 function _re(string) {
   let r = "^"
   for (let i = 0, len = string.length; i < len; i++) {
-    if(string[i] === "\\") r += "[\\\\]"
+    if (string[i] === "\\") r += "[\\\\]"
+    else if (string[i] === "^") r += "[\\^]"
+    else if (alphanumeric.test(string[i])) r += string[i]
     else r += "[" + string[i] + "]"
   }
   return new RegExp(r)
 }
 
 export class Ascii2Utf8Parser extends Parser {
-  constructor(map = simple_ascii2utf8_mapping) {
+  constructor(map = ascii2utf8map) {
     super()
-    for (let [ascii, utf8] of greek_letters) {
-      const re = _re(ascii)
-      this.literal(re, found => {
-        return utf8
-      })
-    }
-    for (let [operator, utf8] of operation_symbols) {
-      const re = _re(operator)
-      this.binaryLeftAssociative(re, 100, (left, right) => {
-        return left + map.get(operator) + right
+    for (let key of sorted) {
+      const re = _re(key), value = map.get(key)
+      this.literal(re, () => {
+        return value
       })
     }
   }

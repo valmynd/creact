@@ -19,13 +19,13 @@ const ws = /^\s+/
 
 /**
  * @callback UnaryOperandHandler
- * @param {*} operand
+ * @param {string} operand
  */
 
 /**
  * @callback BinaryOperandHandler
- * @param {*} left
- * @param {*} right
+ * @param {string} left
+ * @param {string} right
  */
 
 
@@ -58,7 +58,9 @@ export class Parser {
         else throw "AlreadyDefinedLed"
       }
     } else {
-      s = {re, bp, nud, led}
+      s = {re, bp}
+      if(nud !== undefined) s.nud = nud
+      if(led !== undefined) s.led = led
       this.recognized.set(re.source, s)
     }
   }
@@ -129,10 +131,12 @@ export class Parser {
         return this.currentToken
       }
     }
+    console.log("advance()", s, this.currentToken)
     // iterate through symbols
     for (let symbol of this.recognized.values()) {
       matches = symbol.re.exec(s)
       if (matches !== null) {
+        console.log(symbol.re.source, {matches})
         let value = matches[0], to = from + value.length
         let token = Object.create(symbol)
         token.value = value
@@ -175,9 +179,6 @@ export class Parser {
     while (bp < this.currentToken.bp) {
       this.previousToken = this.currentToken
       this.currentToken = this.advance()
-      if (!this.previousToken.led) {
-        console.log("noLED", bp, this.ignored.values(), "\n\t", this.previousToken, this.currentToken, this.src.substr(this.previousToken.to))
-      }
       left = this.previousToken.led(left)
     }
     return left
