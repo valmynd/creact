@@ -20,17 +20,19 @@ export class Trie {
   insert(key, value) {
     ++this.n_values
     let previous, current = this.trie
-    let past_nodes_since_last_required_node = []
+    let quantifier, optional, repeatable, past_nodes_since_last_required_node = []
     for (let i = 0, len = key.length; i < len; i++) {
-      let quantifier = null, optional = false, repeatable = false
+      quantifier = null
+      optional = false
+      repeatable = false
       // if an unescaped | is found, leave the rest of the key to a subsequent insert()-call
       if (i > 0 && key[i] === "|" && key[i - 1] !== "\\" && (i < 2 || key[i - 2] !== "\\")) { // \| and \\|
         this.insert(key.substr(i + 1), value)
         break
       }
-      // handle (escaped?) backslashes
+      // handle backslashes
       if (key[i] === "\\") {
-        if (i > 0 && key[i - 1] !== "\\") i++ // needs testing
+        if (i > 0 && key[i - 1] !== "\\") i++
       }
       // advance previous and current
       previous = current
@@ -54,6 +56,13 @@ export class Trie {
     }
     if (!(VALUE_KEY in current)) { // first come, first serve
       current[VALUE_KEY] = value
+    }
+    if (optional) { // last node is not required
+      past_nodes_since_last_required_node.forEach(node => {
+        if (!(VALUE_KEY in node)) {
+          node[VALUE_KEY] = value
+        }
+      })
     }
     return this
   }
