@@ -1,25 +1,72 @@
+const VALUE_KEY = "_v"
+const RANGE_KEY = "_k" // e.g. [0-9a-zA-Z]
+const PATTERN_KEY = "_p" // e.g. *, +, ?
+const quantifiers = new Set(["*", "+", "?"])
+
 export class Trie {
   constructor() {
     this.trie = {}
-    this.n_keys = 0
     this.n_values = 0
   }
 
-  insert(value, ...keys) {
+  /**
+   * Insert key-value-pair into the Trie
+   * Keys can contain very(!) simple forms of regular expressions, e.g.
+   *  "oo|inf(inity)?"
+   *  "-=|eq(u)?(iv|als)?"
+   * @param {string} key
+   * @param {*} value
+   */
+  insert(key, value) {
     ++this.n_values
-    for (let key of keys) {
-      ++this.n_keys
-      let char, previous, current = this.trie
-      for (let i = 0, len = key.length; i < len; i++) {
-        char = key[i]
-        previous = current
-        current = previous[char]
-        if (current === undefined) {
-          previous[char] = {}
-          current = previous[char]
-        }
+    let previous, current = this.trie
+    let last_required_node = null
+    for (let i = 0, len = key.length; i < len; i++) {
+      let quantifier = null, optional = false, repeatable = false
+      // if an unescaped | is found, leave the rest of the key to a subsequent insert()-call
+      if (i > 0 && key[i] === "|" && key[i - 1] !== "\\" && (i < 2 || key[i - 2] !== "\\")) { // \| and \\|
+        this.insert(key.substr(i + 1), value)
+        break
       }
-      current["_val"] = value
+      // advance previous and current
+      previous = current
+      current = previous[key[i]]
+      if (current === undefined) {
+        previous[key[i]] = {}
+        current = previous[key[i]]
+      }
+      // detect unescaped quantifiers, e.g. inf+i?n?i?ty
+      if (quantifiers.has(key[i + 1]) && key[i] !== "\\" && (i < 1 || key[i - 1] !== "\\")) { // *+?
+        quantifier = key[i + 1]
+        optional = (quantifier !== "+")
+        repeatable = (quantifier !== "?")
+      }
+      // handle required
+      console.log("insert", key[i], {optional}, {repeatable})
+      if (!optional) {
+        if (last_required_node !== null) {
+          last_required_node[key[i]] = current
+        }
+        last_required_node = current
+      }
+      if (repeatable) {
+        current[key[i]] = current
+      }
+      if (quantifier !== null) {
+        i++
+      }
     }
+    if (!(VALUE_KEY in current)) { // first come, first serve
+      current[VALUE_KEY] = value
+    }
+    return this
+  }
+
+  /**
+   * Returns Value of best matching Entry in the Trie, or null if no match
+   * @param {string} str
+   */
+  match(str) {
+
   }
 }
