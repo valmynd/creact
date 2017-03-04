@@ -4,13 +4,30 @@ import {Trie} from "../dist/mathconv/trie"
 
 const parser = new Ascii2Utf8Parser()
 
-test('Trie works correctly', t => {
+test('Trie inf+i works correctly', t => {
+  const trie = new Trie()
+  trie.insert(String.raw`no\|yes|yey`, 0)
+  //console.log(JSON.stringify(trie.trie))
+  t.true(trie.trie["n"]["o"]["|"]["y"]["e"]["s"]["_v"] === 0)
+  t.true(trie.trie["y"]["e"]["y"]["_v"] === 0)
+})
+
+
+test('Trie inf+i works correctly', t => {
+  const trie = new Trie()
+  trie.insert("inf+i", 1)
+  t.true(trie.trie["i"]["n"]["f"]["f"]["i"]["_v"] === 1)
+})
+
+
+test('Trie+ works correctly', t => {
   const trie = new Trie()
   //trie.insert(String.raw`no\|yes|yey`, 0)
-  trie.insert("inf?i?", 1)
+  trie.insert("infi?n?y", 1)
   console.log(JSON.stringify(trie.trie))
   //console.log(trie.trie)
-  t.true(trie.trie["i"]["n"]["f"]["_v"] === 1)
+  t.true(trie.trie["i"]["n"]["f"]["y"]["_v"] === 1)
+  t.true(trie.trie["i"]["n"]["f"]["n"]["y"]["_v"] === 1)
 })
 
 test.skip('Ascii2Utf8Parser works correctly', t => {
