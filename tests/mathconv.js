@@ -28,18 +28,25 @@ test('Trie infi?n?y works correctly', t => {
   t.true(trie.trie["i"]["n"]["f"]["y"]["_v"] === 1)
   t.true(trie.trie["i"]["n"]["f"]["n"]["y"]["_v"] === 1)
 })
+
 test('Trie epsil?o?n? works correctly', t => {
   const trie = new Trie()
   trie.insert("epsil?o?n?", 1)
   t.true(trie.trie["e"]["p"]["s"]["i"]["_v"] === 1)
-  t.true(trie.trie["e"]["p"]["s"]["i"]["l"]["_v"]=== 1)
-  t.true(trie.trie["e"]["p"]["s"]["i"]["n"]["_v"]=== 1)
-  t.true(trie.trie["e"]["p"]["s"]["i"]["l"]["o"]["_v"]=== 1)
+  t.true(trie.trie["e"]["p"]["s"]["i"]["l"]["_v"] === 1)
+  t.true(trie.trie["e"]["p"]["s"]["i"]["n"]["_v"] === 1)
+  t.true(trie.trie["e"]["p"]["s"]["i"]["l"]["o"]["_v"] === 1)
   trie.insert(String.raw`epsi\?l?o?n?`, 1)
   t.true(trie.trie["e"]["p"]["s"]["i"]["?"]["_v"] === 1)
   trie.insert(String.raw`epsi\\?l?o?n?`, 1)
   t.true(trie.trie["e"]["p"]["s"]["i"]["\\"]["?"]["_v"] === 1)
   //console.log(JSON.stringify(trie.trie))
+})
+
+test('Trie /hel(lo)?/.exec("helo") works correctly', t => { // hel(la|(lo)+)?
+  const trie = new Trie()
+  trie.insert("hel(lo)?", 1)
+  console.log(JSON.stringify(trie.trie))
 })
 
 test.skip('Ascii2Utf8Parser works correctly', t => {
