@@ -45,7 +45,8 @@ test('Trie epsil?o?n? works correctly', t => {
 
 test('Trie /hel(lo)?/.exec("helo") works correctly', t => { // hel(la|(lo)+)?
   const trie = new Trie()
-  trie.insert("hel(lo)?", 1)
+  trie.insert(String.raw`hel(lo)`, 1) // the "o" node should hold the value
+  //trie.insert(String.raw`hel(lo)ya`, 1) // the "a" node should hold the value
   console.log(JSON.stringify(trie.trie))
 })
 
