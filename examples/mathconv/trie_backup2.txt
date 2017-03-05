@@ -56,12 +56,10 @@ export class Trie {
         }
         if (!optional) {
           past_nodes_since_last_required_node = []
+          console.log("should be empty", past_nodes_since_last_required_node)
         }
         previous = current
         current = group_info.next
-        quantifier = null
-        optional = false
-        repeatable = false
         i += c + 2
         if (i >= len) break
       }
@@ -71,7 +69,7 @@ export class Trie {
         break
       }
       // advance previous and current
-      //console.log(i, "advance", (this instanceof Group) ? "group" : "trie", key[i], quantifier)
+      console.log(i, "advance", (this instanceof Group) ? "group" : "trie", key[i], quantifier)
       previous = current
       current = previous[key[i]]
       if (current === undefined) {
@@ -93,7 +91,7 @@ export class Trie {
       if (optional) past_nodes_since_last_required_node.push(current)
       else past_nodes_since_last_required_node = [current]
       if (repeatable) current[key[i]] = current
-      if (quantifier !== null) i++
+      if (quantifier !== null && group_info === null) i++
     }
     let value_holding_nodes = []
     if (!(VALUE_KEY in current)) { // first come, first serve
@@ -126,35 +124,11 @@ export class Trie {
   }
 
   /**
-   * Returns Value and matching string of the best matching Entry in the Trie, or null if no match
+   * Returns Value of best matching Entry in the Trie, or null if no match
    * @param {string} str
-   * @returns {{match: string, value: *}}
    */
   match(str) {
-    let n, g, i = 0, current = this.trie
-    for (let len = str.length; i < len; i++) {
-      g = null
-      n = current[str[i]]
-      if (n !== undefined) {
-        current = n
-      } else {
-        g = current[GROUP_KEY]
-        if (g !== undefined) {
-          for (let {group, next} of g) {
-            let m = group.match(str.substr(i))
-            if (m !== null) {
-              i += m.match.length
-              n = next
-            }
-          }
-        }
-      }
-    }
-    if (n === undefined) return null
-    return {
-      match: str.substr(0, i),
-      value: n[VALUE_KEY]
-    }
+
   }
 }
 
