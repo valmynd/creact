@@ -4,7 +4,7 @@ import {Trie} from "../dist/mathconv/trie"
 
 const parser = new Ascii2Utf8Parser()
 
-test('Trie inf+i works correctly', t => {
+test.skip('Trie inf+i works correctly', t => {
   const trie = new Trie()
   trie.insert(String.raw`no\|yes|yey`, 0)
   //console.log(JSON.stringify(trie.trie))
@@ -13,14 +13,14 @@ test('Trie inf+i works correctly', t => {
 })
 
 
-test('Trie inf+i works correctly', t => {
+test.skip('Trie inf+i works correctly', t => {
   const trie = new Trie()
   trie.insert("inf+i", 1)
   t.true(trie.trie["i"]["n"]["f"]["f"]["i"]["_v"] === 1)
 })
 
 
-test('Trie infi?n?y works correctly', t => {
+test.skip('Trie infi?n?y works correctly', t => {
   const trie = new Trie()
   trie.insert("infi?n?y", 1)
   //console.log(JSON.stringify(trie.trie))
@@ -29,7 +29,7 @@ test('Trie infi?n?y works correctly', t => {
   t.true(trie.trie["i"]["n"]["f"]["n"]["y"]["_v"] === 1)
 })
 
-test('Trie epsil?o?n? works correctly', t => {
+test.skip('Trie epsil?o?n? works correctly', t => {
   const trie = new Trie()
   trie.insert("epsil?o?n?", 1)
   t.true(trie.trie["e"]["p"]["s"]["i"]["_v"] === 1)
@@ -45,9 +45,10 @@ test('Trie epsil?o?n? works correctly', t => {
 
 test('Trie /hel(lo)?/.exec("helo") works correctly', t => { // hel(la|(lo)+)?
   const trie = new Trie()
-  trie.insert(String.raw`hel(lo)`, 1) // the "o" node should hold the value
-  //trie.insert(String.raw`hel(lo)ya`, 1) // the "a" node should hold the value
-  console.log(JSON.stringify(trie.trie))
+  //trie.insert(String.raw`hel(lo)`, 1) // the "o" node should hold the value
+  trie.insert(String.raw`hel(lo)ya`, 1) // the "a" node should hold the value
+  console.log(JSON.stringify(trie))
+  console.log(trie.trie["h"]["e"])
 })
 
 test.skip('Ascii2Utf8Parser works correctly', t => {
