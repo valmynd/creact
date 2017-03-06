@@ -3,20 +3,7 @@ import {Ascii2Utf8Parser} from "../dist/mathconv/convert"
 import {Trie} from "../dist/mathconv/trie"
 
 const parser = new Ascii2Utf8Parser()
-
-test.skip('Trie epsil?o?n? works correctly', t => {
-  const trie = new Trie()
-  trie.insert("epsil?o?n?", 1)
-  t.true(trie.trie["e"]["p"]["s"]["i"]["_v"] === 1)
-  t.true(trie.trie["e"]["p"]["s"]["i"]["l"]["_v"] === 1)
-  t.true(trie.trie["e"]["p"]["s"]["i"]["n"]["_v"] === 1)
-  t.true(trie.trie["e"]["p"]["s"]["i"]["l"]["o"]["_v"] === 1)
-  trie.insert(String.raw`epsi\?l?o?n?`, 1)
-  t.true(trie.trie["e"]["p"]["s"]["i"]["?"]["_v"] === 1)
-  trie.insert(String.raw`epsi\\?l?o?n?`, 1)
-  t.true(trie.trie["e"]["p"]["s"]["i"]["\\"]["?"]["_v"] === 1)
-  //console.log(JSON.stringify(trie.trie))
-})
+const str = o => JSON.stringify(o)
 
 test('Trie inf+i?n?i?t?y works correctly', t => {
   const trie = new Trie()
@@ -24,6 +11,12 @@ test('Trie inf+i?n?i?t?y works correctly', t => {
   t.deepEqual(trie.match("infinity"), {value: 1, match: "infinity"})
   t.deepEqual(trie.match("infy"), {value: 1, match: "infy"})
   t.deepEqual(trie.match("infffity"), {value: 1, match: "infffity"})
+  t.true(trie.match("inffofity") === null)
+  t.true(trie.match("inf") === null)
+  trie.insert("inf+i?n?i?t?y?", 2)
+  t.deepEqual(trie.match("inf"), {value: 2, match: "inf"})
+  t.deepEqual(trie.match("infinity"), {value: 1, match: "infinity"})
+  //console.log((trie.trie["i"]["n"]["f"]))
 })
 
 test.skip('Trie hel(lo) works correctly', t => { // hel(la|(lo)+)?
@@ -32,23 +25,23 @@ test.skip('Trie hel(lo) works correctly', t => { // hel(la|(lo)+)?
   t.deepEqual(trie.match("hello"), {value: 1, match: "hello"})
 })
 
-test.skip('Trie hel(lo)?ya works correctly', t => { // hel(la|(lo)+)?
+test('Trie hel(lo)?ya works correctly', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(String.raw`hel(lo)?ya`, 1)
   t.deepEqual(trie.match("helya"), {value: 1, match: "helya"})
   t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
+  t.true(trie.match("hellya") === null)
+  //console.log(str(trie.trie))
 })
 
-test.skip('Trie hel(lo)+ya works correctly', t => { // hel(la|(lo)+)?
+test('Trie hel(lo)+ya works correctly', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   //console.log((trie.trie["h"]["e"]["l"]["_g"][0]))
-  //t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
-  //t.deepEqual(trie.match("helloloya"), {value: 1, match: "helloloya"})
-  //t.deepEqual(trie.match("hellollya"), {value: 1, match: "hellollya"}) // FIXME: should NOT match
-  //t.deepEqual(trie.match("helloolya"), {value: 1, match: "helloolya"}) // FIXME: endless loop
-  trie.insert(String.raw`(lo)+`, 1)
-  console.log(trie.trie["_g"][0]["next"])
-  t.deepEqual(trie.match("lol"), {value: 1, match: "lol"})
+  trie.insert(String.raw`hel(lo)+ya`, 1)
+  t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
+  t.deepEqual(trie.match("helloloya"), {value: 1, match: "helloloya"})
+  t.true(trie.match("hellollya") === null) // should NOT match
+  t.true(trie.match("helloolya") === null) // caused endless loop before
 })
 
 

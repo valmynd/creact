@@ -13,13 +13,15 @@ export class Trie {
   }
 
   /**
-   * Internal implementation of insert
-   * Returns a List of Nodes that hold Values
-   * @param key
-   * @param [value]
-   * @returns {Object[]}
+   * Insert key-value-pair into the Trie
+   * Keys can contain very(!) simple forms of regular expressions, e.g.
+   *  "oo|inf(inity)?"
+   *  "-=|eq(u)?(iv|als)?"
+   * @param {string} key
+   * @param {*} value
+   * @returns {Trie}
    */
-  _insert(key, value = undefined) {
+  insert(key, value) {
     let quantifier, optional, repeatable, group_info
     let current = this.trie, past_nodes_since_last_required_node = []
     for (let i = 0, len = key.length; i < len; i++) {
@@ -81,34 +83,16 @@ export class Trie {
       if (repeatable) current[key[i]] = current
       if (quantifier !== null) i++
     }
-    let value_holding_nodes = []
     if (!(VALUE_KEY in current)) { // first come, first serve
       if (value !== undefined) current[VALUE_KEY] = value
-      value_holding_nodes.push(current)
     }
     if (optional) { // last node is not required
       past_nodes_since_last_required_node.forEach(node => {
         if (!(VALUE_KEY in node)) {
           if (value !== undefined) node[VALUE_KEY] = value
-          value_holding_nodes.push(node)
         }
       })
     }
-    return value_holding_nodes
-  }
-
-  /**
-   * Insert key-value-pair into the Trie
-   * Keys can contain very(!) simple forms of regular expressions, e.g.
-   *  "oo|inf(inity)?"
-   *  "-=|eq(u)?(iv|als)?"
-   * @param {string} key
-   * @param {*} value
-   * @returns {Trie}
-   */
-  insert(key, value) {
-    this._insert(key, value)
-    return this
   }
 
   /**
@@ -117,43 +101,36 @@ export class Trie {
    * @returns {{match: string, value: *}|null}
    */
   match(str) {
-    let n, g, i = 0, current = this.trie
+    let n, g, nf, i = 0, current = this.trie
     for (let len = str.length; i < len; i++) {
-      g = null
       n = current[str[i]]
-      //console.log(i, this._type(), "match step", str[i], str.substr(i), JSON.stringify(n))
       if (n !== undefined) {
         current = n
-      } else if (GROUP_KEY in current) {
+      } else {
         g = current[GROUP_KEY]
-        if (g !== undefined) {
-          for (let {group, next} of g) {
-            let m = group.match(str.substr(i))
-            if (m !== null) {
-              i += m.match.length - 1
-              current = next
-              break
-            }
-            //console.log({m}, str.substr(i), this._type(), group.trie)
+        if (g === undefined) break
+        nf = true
+        for (let {group, next} of g) {
+          let m = group.match(str.substr(i))
+          if (m !== null) {
+            i += m.match.length - 1
+            current = next
+            nf = false
+            break
           }
         }
-      } else {
-        break
+        if (nf) return null
       }
     }
-    //console.log("atend", this._type(), {current, i})
-    if (current === undefined) return null
-    return {
-      match: str.substr(0, i),
-      value: current[VALUE_KEY]
-    }
+    let value = current[VALUE_KEY]
+    if (value === undefined) return null
+    return {match: str.substr(0, i), value}
   }
 }
 
 class Group extends Trie {
   constructor(group_key, root) {
     super()
-    this._insert(group_key, VALUE_PLACEHOLDER)
-    //this.root = root
+    this.insert(group_key, VALUE_PLACEHOLDER)
   }
 }
