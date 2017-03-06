@@ -19,7 +19,6 @@ export class Trie {
    *  "-=|eq(u)?(iv|als)?"
    * @param {string} key
    * @param {*} value
-   * @returns {Trie}
    */
   insert(key, value) {
     let quantifier, optional, repeatable, group_info
@@ -43,54 +42,47 @@ export class Trie {
           i++
         }
         current = group_info.next
-        if (!optional) past_nodes_since_last_required_node = []
+        if (!optional) past_nodes_since_last_required_node = [current]
         if (repeatable) current[GROUP_KEY] = [group_info]
-        quantifier = null
-        optional = false
-        repeatable = false
-        i += c + 2
-        if (i >= len) break
-      }
-      // if an unescaped | is found, leave the rest of the key to a subsequent insert()-call
-      if (key[i] === "|") {
-        if (i === 0) throw new Error(`TautologyInRegularExpression: ${key}`)
-        if (key[i - 1] !== "\\" && (i < 2 || key[i - 2] !== "\\")) { // \| and \\|
-          this.insert(key.substr(i + 1), value)
-          break
+        i += ++c
+      } else {
+        // if an unescaped | is found, leave the rest of the key to a subsequent insert()-call
+        if (key[i] === "|") {
+          if (i === 0) throw new Error(`TautologyInRegularExpression: ${key}`)
+          if (key[i - 1] !== "\\" && (i < 2 || key[i - 2] !== "\\")) { // \| and \\|
+            this.insert(key.substr(i + 1), value)
+            break
+          }
         }
+        // detect unescaped quantifiers, e.g. inf+i?n?i?ty
+        if (quantifiers.has(key[i + 1]) && key[i] !== "\\" && (i < 1 || key[i - 1] !== "\\")) { // *+?
+          quantifier = key[i + 1]
+          optional = (quantifier !== "+")
+          repeatable = (quantifier !== "?")
+        }
+        // handle backslashes
+        if (key[i] === "\\") {
+          if (i > 0 && key[i - 1] !== "\\") i++
+        }
+        // advance previous and current
+        current = current[key[i]] || (current[key[i]] = {})
+        past_nodes_since_last_required_node.forEach(node => {
+          let tmp = node[key[i]]
+          if (tmp === undefined) node[key[i]] = current
+          else if (tmp !== current) Object.assign(tmp, current)
+        })
+        // handle quantifiers
+        if (optional) past_nodes_since_last_required_node.push(current)
+        else past_nodes_since_last_required_node = [current]
+        if (repeatable) current[key[i]] = current
+        if (quantifier !== null) i++
       }
-      // detect unescaped quantifiers, e.g. inf+i?n?i?ty
-      if (quantifiers.has(key[i + 1]) && key[i] !== "\\" && (i < 1 || key[i - 1] !== "\\")) { // *+?
-        quantifier = key[i + 1]
-        optional = (quantifier !== "+")
-        repeatable = (quantifier !== "?")
-      }
-      // handle backslashes
-      if (key[i] === "\\") {
-        if (i > 0 && key[i - 1] !== "\\") i++
-      }
-
-      // advance previous and current
-      current = current[key[i]] || (current[key[i]] = {})
-      past_nodes_since_last_required_node.forEach(node => {
-        let tmp = node[key[i]]
-        if (tmp === undefined) node[key[i]] = current
-        else if (tmp !== current) Object.assign(tmp, current)
-      })
-      // handle quantifiers
-      if (optional) past_nodes_since_last_required_node.push(current)
-      else past_nodes_since_last_required_node = [current]
-      if (repeatable) current[key[i]] = current
-      if (quantifier !== null) i++
     }
-    if (!(VALUE_KEY in current)) { // first come, first serve
-      if (value !== undefined) current[VALUE_KEY] = value
-    }
+    // assign value to nodes that should cause a match
+    if (!(VALUE_KEY in current)) current[VALUE_KEY] = value
     if (optional) { // last node is not required
       past_nodes_since_last_required_node.forEach(node => {
-        if (!(VALUE_KEY in node)) {
-          if (value !== undefined) node[VALUE_KEY] = value
-        }
+        if (!(VALUE_KEY in node)) node[VALUE_KEY] = value
       })
     }
   }
@@ -101,7 +93,7 @@ export class Trie {
    * @returns {{match: string, value: *}|null}
    */
   match(str) {
-    let n, g, nf, i = 0, current = this.trie
+    let n, g, m, i = 0, current = this.trie
     for (let len = str.length; i < len; i++) {
       n = current[str[i]]
       if (n !== undefined) {
@@ -109,17 +101,16 @@ export class Trie {
       } else {
         g = current[GROUP_KEY]
         if (g === undefined) break
-        nf = true
+        if (g.length === 0) throw new Error("Should never happen: Empty group-list in Trie")
         for (let {group, next} of g) {
-          let m = group.match(str.substr(i))
+          m = group.match(str.substr(i))
           if (m !== null) {
             i += m.match.length - 1
             current = next
-            nf = false
             break
           }
         }
-        if (nf) return null
+        if (m === null) break
       }
     }
     let value = current[VALUE_KEY]
