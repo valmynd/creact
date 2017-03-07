@@ -1,7 +1,9 @@
 const VALUE_KEY = "_v"
 const GROUP_KEY = "_g" // there could be multiple groups at one point in the trie
 const VALUE_PLACEHOLDER = -1
+const ESCAPED_BACKSLASH_REPLACEMENT = "\u0003"
 const quantifiers = new Set(["*", "+", "?"])
+const escapable = new Set(["(", "{", "[", "|"])
 const brackets = new Set(["(", "{", "["])
 const r = String.raw
 
@@ -63,17 +65,21 @@ export class Trie {
    * @param {*} value
    */
   insert(key, value) {
-    let quantifier, optional, repeatable, current = this.trie, past_nodes_since_last_required_node = []
+    let k, quantifier, optional, repeatable
+    let current = this.trie, past_nodes_since_last_required_node = []
+    if (this === this.root) key = key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT)
+    //console.log(key)
     for (let i = 0, len = key.length; i < len; i++) {
+      k = key[i]
       quantifier = null
       optional = false
       repeatable = false
       // if an unescaped ( is found, handle it as a group until )
       if (brackets.has(key[i]) && key[i - 1] !== "\\") { // \( or \{ or \[
-        let k = key[i], s = key.substr(i), group, obj, next = {}
+        let s = key.substr(i), group, obj, next = {}
         let c = (k === "(") ? s.search(/[^\\]\)/) : (k === "{") ? s.search(/[^\\]\}/) : s.search(/[^\\]\]/)
         if (c === -1) throw new Error(`UnclosedBracketInRegularExpression: ${s}`)
-        let p = s.substr(1, c), q = s.substr(c + 2, 1)
+        let p = s.substr(1, c), q = s[c + 2], qb = s[c + 1]
         if (k === "[") {
           obj = this._parse_ranges(p, next)
           Object.assign(current, obj)
@@ -83,7 +89,7 @@ export class Trie {
           if (GROUP_KEY in current) current[GROUP_KEY].push({group, next})
           else current[GROUP_KEY] = [{group, next}]
         }
-        if (quantifiers.has(q)) {
+        if (quantifiers.has(q) && qb !== "\\") {
           quantifier = q
           optional = (quantifier !== "+")
           repeatable = (quantifier !== "?")
@@ -96,35 +102,38 @@ export class Trie {
         if (repeatable && k !== "[") current[GROUP_KEY] = [{group, next}]
         i += ++c
       } else {
+        // handle backslashes
+        if (k === ESCAPED_BACKSLASH_REPLACEMENT) { // double-backslash was replaced above
+          k = "\\"
+        } else if (k === "\\") {  // only allow escaping where it makes sense
+          if (escapable.has(key[i + 1])) k = key[++i]
+          else throw new Error(`UnnecessaryEscapeInRegularExpression: ${key.substr(i)}`)
+        }
         // if an unescaped | is found, leave the rest of the key to a subsequent insert()-call
-        if (key[i] === "|") {
+        else if (k === "|" && key[i - 1] !== "\\") {
           if (i === 0) throw new Error(`TautologyInRegularExpression: ${key}`)
-          if (key[i - 1] !== "\\" && (i < 2 || key[i - 2] !== "\\")) { // \| and \\|
+          if (key[i - 1] !== "\\") { // \|
             this.insert(key.substr(i + 1), value)
             break
           }
         }
         // detect unescaped quantifiers, e.g. inf+i?n?i?ty
-        if (quantifiers.has(key[i + 1]) && key[i] !== "\\" && (i < 1 || key[i - 1] !== "\\")) { // *+?
+        else if (quantifiers.has(key[i + 1])) { // *+?
           quantifier = key[i + 1]
           optional = (quantifier !== "+")
           repeatable = (quantifier !== "?")
         }
-        // handle backslashes
-        if (key[i] === "\\") { // TODO: only allow escaping where it makes sense ([{\|, remove hurdles for above
-          if (i > 0 && key[i - 1] !== "\\") i++
-        }
         // advance previous and current
-        current = current[key[i]] || (current[key[i]] = {})
+        current = current[k] || (current[k] = {})
         past_nodes_since_last_required_node.forEach(node => {
-          let tmp = node[key[i]]
-          if (tmp === undefined) node[key[i]] = current
+          let tmp = node[k]
+          if (tmp === undefined) node[k] = current
           else if (tmp !== current) Object.assign(tmp, current)
         })
         // handle quantifiers
         if (optional) past_nodes_since_last_required_node.push(current)
         else past_nodes_since_last_required_node = [current]
-        if (repeatable) current[key[i]] = current
+        if (repeatable) current[k] = current
         if (quantifier !== null) i++
       }
     }

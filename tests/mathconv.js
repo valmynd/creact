@@ -9,7 +9,7 @@ const r = String.raw
 //import a from "../dist/mathconv/asciimath"
 //console.log("asciimath:", str(a))
 
-test('Trie inf+i?n?i?t?y works correctly', t => {
+test('Trie inf+i?n?i?t?y works', t => {
   const trie = new Trie()
   trie.insert("inf+i?n?i?t?y", 1)
   t.deepEqual(trie.match("infinity"), {value: 1, match: "infinity"})
@@ -23,13 +23,13 @@ test('Trie inf+i?n?i?t?y works correctly', t => {
   //console.log((trie.trie["i"]["n"]["f"]))
 })
 
-test('Trie hel(lo) works correctly', t => { // hel(la|(lo)+)?
+test('Trie hel(lo) works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)`, 1)
   t.deepEqual(trie.match("hello"), {value: 1, match: "hello"})
 })
 
-test('Trie hel(lo)?ya works correctly', t => { // hel(la|(lo)+)?
+test('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)?ya`, 1)
   t.deepEqual(trie.match("helya"), {value: 1, match: "helya"})
@@ -38,7 +38,7 @@ test('Trie hel(lo)?ya works correctly', t => { // hel(la|(lo)+)?
   //console.log(str(trie.trie))
 })
 
-test('Trie hel(lo)+ya works correctly', t => { // hel(la|(lo)+)?
+test('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   //console.log((trie.trie["h"]["e"]["l"]["_g"][0]))
   trie.insert(r`hel(lo)+ya`, 1)
@@ -48,7 +48,7 @@ test('Trie hel(lo)+ya works correctly', t => { // hel(la|(lo)+)?
   t.true(trie.match("helloolya") === null) // caused endless loop before
 })
 
-test('Trie a[0-9]*z works correctly', t => {
+test('Trie a[0-9]*z works', t => {
   let trie = new Trie()
   trie.insert(r`a[0-9]*z`, 1)
   t.deepEqual(trie.match("a2017z"), {value: 1, match: "a2017z"})
@@ -61,7 +61,7 @@ test('Trie a[0-9]*z works correctly', t => {
   t.deepEqual(trie.match("a90000"), {value: 1, match: "a90000"})
 })
 
-test('Trie [0-9]+(.[0-9]+)? works correctly', t => {
+test('Trie [0-9]+(.[0-9]+)? works', t => {
   const trie = new Trie()
   trie.insert(r`[0-9]+(.[0-9]+)?`, 1)
   t.deepEqual(trie.match("21.91"), {value: 1, match: "21.91"})
@@ -72,12 +72,24 @@ test('Trie [0-9]+(.[0-9]+)? works correctly', t => {
 test('Trie named groups work', t => {
   const trie = new Trie()
   trie.learn("FLOAT", r`[0-9]+(.[0-9]+)`)
-  trie.insert("a{FLOATy}", 1)
+  trie.insert("a{FLOAT}?", 1)
   t.deepEqual(trie.match("a4.2"), {value: 1, match: "a4.2"})
+  t.deepEqual(trie.match("a"), {value: 1, match: "a"})
+})
+
+test('Trie backslash handling works', t => {
+  let trie = new Trie()
+  trie.insert(r`a\{FLOAT}?`, 1)
+  t.deepEqual(trie.match("a{FLOAT"), {value: 1, match: "a{FLOAT"})
+  trie = new Trie()
+  trie.learn("FLOAT", r`[0-9]+(.[0-9]+)?`)
+  trie.insert(r`a\\{FLOAT}?`, 1)
+  //console.log(trie.trie["a"]["\\"]["_g"][0])
+  t.deepEqual(trie.match("a\\2.22"), {value: 1, match: "a\\2.22"})
 })
 
 
-test.skip('Ascii2Utf8Parser works correctly', t => {
+test.skip('Ascii2Utf8Parser works', t => {
   t.deepEqual(parser.parse("alpha + beta * kappa"), ['α', '+', 'β', '⋅', 'κ'])
   t.deepEqual(parser.parse("beta ** kappa"), ['β', '∗', 'κ'])
   //console.log("parse-result:", parser.parse("sum_(i=1)^n i^3=((n(n+1))/2)^2"))
