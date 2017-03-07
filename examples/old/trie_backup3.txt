@@ -68,6 +68,7 @@ export class Trie {
     let k, quantifier, optional, repeatable
     let current = this.trie, past_nodes_since_last_required_node = []
     if (this === this.root) key = key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT)
+    //console.log(key)
     for (let i = 0, len = key.length; i < len; i++) {
       k = key[i]
       quantifier = null
@@ -75,19 +76,19 @@ export class Trie {
       repeatable = false
       // if an unescaped ( is found, handle it as a group until )
       if (brackets.has(key[i]) && key[i - 1] !== "\\") { // \( or \{ or \[
-        let s = key.substr(i), group, obj, next = {}
+        let s = key.substr(i), group, next = {}
         let c = (k === "(") ? s.search(/[^\\]\)/) : (k === "{") ? s.search(/[^\\]\}/) : s.search(/[^\\]\]/)
         if (c === -1) throw new Error(`UnclosedBracketInRegularExpression: ${s}`)
         let p = s.substr(1, c), q = s[c + 2], qb = s[c + 1]
         if (k === "[") {
-          obj = this._parse_ranges(p, next)
-          Object.assign(current, obj)
+          group = new Range(this._parse_ranges(p, next), this.root)
         } else {
           group = (k === "{") ? this.root.known[p] : new Group(p, this.root)
           if (group === undefined) throw new Error(`UnknownNamedGroupInRegularExpression: ${p} in ${s}`)
-          if (GROUP_KEY in current) current[GROUP_KEY].push({group, next})
-          else current[GROUP_KEY] = [{group, next}]
         }
+        let group_info = {group, next}
+        if (GROUP_KEY in current) current[GROUP_KEY].push({group, next})
+        else current[GROUP_KEY] = [{group, next}]
         if (quantifiers.has(q) && qb !== "\\") {
           quantifier = q
           optional = (quantifier !== "+")
@@ -95,22 +96,14 @@ export class Trie {
           i++
         }
         current = next
-        if (k !== "[") {
-          past_nodes_since_last_required_node.forEach(node => {
-            let tmp = node[GROUP_KEY]
-            if (tmp === undefined) node[GROUP_KEY] = [{group, next}]
-            else if (tmp !== current) tmp.push({group, next})
-          })
-        } else {
-          past_nodes_since_last_required_node.forEach(node => {
-            //let fk = Object.keys(obj)[0]; console.log(node[fk] !== current)
-            Object.assign(node, obj) // might be costly, but it works
-          })
-        }
+        past_nodes_since_last_required_node.forEach(node => {
+          let tmp = node[GROUP_KEY]
+          if (tmp === undefined) node[GROUP_KEY] = [{group, next}]
+          else if (tmp !== current) tmp.push({group, next})
+        })
         if (optional) past_nodes_since_last_required_node.push(current)
         else past_nodes_since_last_required_node = [current]
-        if (repeatable && k === "[") Object.assign(current, obj)
-        if (repeatable && k !== "[") current[GROUP_KEY] = [{group, next}]
+        if (repeatable) current[GROUP_KEY] = [{group, next}]
         i += ++c
       } else {
         // handle backslashes
@@ -194,5 +187,12 @@ class Group extends Trie {
   constructor(group_key, root) {
     super(root)
     this.insert(group_key, VALUE_PLACEHOLDER)
+  }
+}
+
+class Range extends Trie {
+  constructor(range_obj, root) {
+    super(root)
+    this.trie = range_obj
   }
 }
