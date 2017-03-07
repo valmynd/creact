@@ -1,8 +1,6 @@
 import test from "ava"
-import {Ascii2Utf8Parser} from "../dist/mathconv/convert"
 import {Trie} from "../dist/mathconv/trie"
 
-const parser = new Ascii2Utf8Parser()
 const str = o => JSON.stringify(o)
 const r = String.raw
 
@@ -86,11 +84,4 @@ test('Trie backslash handling works', t => {
   trie.insert(r`a\\{FLOAT}?`, 1)
   //console.log(trie.trie["a"]["\\"]["_g"][0])
   t.deepEqual(trie.match("a\\2.22"), {value: 1, match: "a\\2.22"})
-})
-
-
-test.skip('Ascii2Utf8Parser works', t => {
-  t.deepEqual(parser.parse("alpha + beta * kappa"), ['α', '+', 'β', '⋅', 'κ'])
-  t.deepEqual(parser.parse("beta ** kappa"), ['β', '∗', 'κ'])
-  //console.log("parse-result:", parser.parse("sum_(i=1)^n i^3=((n(n+1))/2)^2"))
 })
