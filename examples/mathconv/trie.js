@@ -11,10 +11,10 @@ export class Trie {
   constructor(root = null) {
     this.trie = {}
     this.root = root
-    this.symbols = null
+    this.known = null
     if (root === null) { // not instanceOf Group
       this.root = this
-      this.symbols = {}
+      this.known = {}
       //this.learn("FLOAT", r`[0-9]+(.[0-9]+)?`)
     }
   }
@@ -53,7 +53,7 @@ export class Trie {
    * @param {string} pattern
    */
   learn(identifier, pattern) {
-    this.symbols[identifier] = new Group(pattern, this)
+    this.known[identifier] = new Group(pattern, this)
   }
 
   /**
@@ -84,7 +84,7 @@ export class Trie {
           obj = this._parse_ranges(p, next)
           Object.assign(current, obj)
         } else {
-          group = (k === "{") ? this.root.symbols[p] : new Group(p, this.root)
+          group = (k === "{") ? this.root.known[p] : new Group(p, this.root)
           if (group === undefined) throw new Error(`UnknownNamedGroupInRegularExpression: ${p} in ${s}`)
           if (GROUP_KEY in current) current[GROUP_KEY].push({group, next})
           else current[GROUP_KEY] = [{group, next}]
@@ -96,6 +96,11 @@ export class Trie {
           i++
         }
         current = next
+        past_nodes_since_last_required_node.forEach(node => {
+          let tmp = node[GROUP_KEY]
+          if (tmp === undefined) node[GROUP_KEY] = [{group, next}]
+          else if (tmp !== current) tmp.push({group, next})
+        })
         if (optional) past_nodes_since_last_required_node.push(current)
         else past_nodes_since_last_required_node = [current]
         if (repeatable && k === "[") Object.assign(current, obj)

@@ -43,25 +43,23 @@ export class Parser {
    * Internal: define a Symbol or adjust an existing one
    * @param {string} re
    * @param {int} bp
-   * @param {function|undefined} [nud]
-   * @param {function|undefined} [led]
+   * @param {function|null} [nud]
+   * @param {function|null} [led]
    */
-  _define(re, bp = 0, nud, led) {
+  _define(re, bp = 0, nud = null, led = null) {
     let s = this.symbols[re]
     if (s !== undefined) {
       if (bp >= s.bp) s.bp = bp
-      if (nud !== undefined) {
-        if (s.nud === undefined) s.nud = nud
+      if (nud !== null) {
+        if (s.nud === null) s.nud = nud
         else throw "AlreadyDefinedNud"
       }
-      if (led !== undefined) {
-        if (s.led === undefined) s.led = led
+      if (led !== null) {
+        if (s.led === null) s.led = led
         else throw "AlreadyDefinedLed"
       }
     } else {
-      s = {re, bp}
-      if (nud !== undefined) s.nud = nud
-      if (led !== undefined) s.led = led
+      s = {re, bp, nud, led}
       this.symbols[re] = s
     }
   }
@@ -77,7 +75,7 @@ export class Parser {
    * @param {BinaryOperandHandler} callback
    */
   binaryLeftAssociative(re, bp, callback) {
-    this._define(re, bp, undefined, (left) => callback(left, this.parseExpression(bp).value))
+    this._define(re, bp, null, (left) => callback(left, this.parseExpression(bp).value))
   }
 
   /**
@@ -87,7 +85,7 @@ export class Parser {
    * @param {BinaryOperandHandler} callback
    */
   binaryRightAssociative(re, bp, callback) {
-    this._define(re, bp, undefined, (left) => callback(left, this.parseExpression(bp - 1).value))
+    this._define(re, bp, null, (left) => callback(left, this.parseExpression(bp - 1).value))
   }
 
   /**
@@ -107,7 +105,7 @@ export class Parser {
    * @param {UnaryOperandHandler} callback
    */
   unaryPostfix(re, bp, callback) {
-    this._define(re, bp, undefined, () => callback(this.parseExpression(bp - 1).value))
+    this._define(re, bp, null, () => callback(this.parseExpression(bp - 1).value))
   }
 
   /**
@@ -138,7 +136,7 @@ export class Parser {
      }
      }*/
     // nothing suitable was found
-    throw `UnknownExpression: ${s}`
+    //throw `UnknownExpression: ${s}`
   }
 
   /**
@@ -165,6 +163,5 @@ export class Parser {
     this.src = input
     this.currentToken = null
     this.previousToken = this.advance()
-    return this.parseStatements(/^$/)
   }
 }

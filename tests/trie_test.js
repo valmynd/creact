@@ -1,10 +1,11 @@
 import test from "ava"
+import CircularJSON from "circular-json"
 import {Trie} from "../dist/mathconv/trie"
 
-const str = o => JSON.stringify(o)
+const str = o => CircularJSON.stringify(o)
 const r = String.raw
 
-//import a from "../dist/mathconv/asciimath"
+import a from "../dist/mathconv/asciimath"
 //console.log("asciimath:", str(a))
 
 test('Trie inf+i?n?i?t?y works', t => {
@@ -84,4 +85,15 @@ test('Trie backslash handling works', t => {
   trie.insert(r`a\\{FLOAT}?`, 1)
   //console.log(trie.trie["a"]["\\"]["_g"][0])
   t.deepEqual(trie.match("a\\2.22"), {value: 1, match: "a\\2.22"})
+})
+
+test('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
+  let trie = new Trie()
+  trie.learn("WS", "[ \t\r\n\f]")
+  trie.learn("GREEK_LETTER", Object.keys(a.TOKENS.GREEK_LETTER).join("|"))
+  trie.insert("{GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER}", 1)
+  //console.log(str(trie.trie["_g"][0].next))
+  console.log("match", trie.match("α+α"))
+  //trie.insert("[a-z]{WS}*{WS}*", 1)
+  //console.log(trie.match("a"))
 })

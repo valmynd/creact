@@ -1,7 +1,6 @@
 import {Parser} from "../mathconv/parser"
-const alphanumeric = /[a-zA-Z0-9]/
 
-let greek_letters = {
+let GREEK_LETTER = {
   'α': 'alpha',
   'β': 'beta',
   'χ': 'chi',
@@ -40,11 +39,8 @@ let greek_letters = {
 export class Ascii2Utf8Parser extends Parser {
   constructor() {
     super()
-    for (let value in greek_letters) {
-      let re = greek_letters[value]
-      this.literal(re, () => {
-        return value
-      })
-    }
+    //this.trie.learn("WS", "[ \t\r\n\f]")
+    //this.trie.learn("GREEK_LETTER", Object.keys(GREEK_LETTER).join("|"))
+    //this.trie.insert("{GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER}", 1)
   }
 }

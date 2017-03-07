@@ -5,7 +5,7 @@ const parser = new Ascii2Utf8Parser()
 const str = o => JSON.stringify(o)
 const r = String.raw
 
-test.skip('Ascii2Utf8Parser works', t => {
+test('Ascii2Utf8Parser works', t => {
   console.log(parser.parse("alpha"))
   //t.deepEqual(parser.parse("alpha + beta * kappa"), ['α', '+', 'β', '⋅', 'κ'])
   //t.deepEqual(parser.parse("beta ** kappa"), ['β', '∗', 'κ'])
