@@ -2,15 +2,24 @@ const VALUE_KEY = "_v"
 const GROUP_KEY = "_g" // there could be multiple groups at one point in the trie
 const VALUE_PLACEHOLDER = -1
 const quantifiers = new Set(["*", "+", "?"])
+const brackets = new Set(["(", "{", "["])
+const r = String.raw
 
 export class Trie {
-  constructor() {
+  constructor(root = null) {
     this.trie = {}
-    this.known = {}
+    this.root = root
+    this.known = null
+    if (root === null) { // not instanceOf Group
+      this.root = this
+      this.known = {}
+      //this.learn("FLOAT", r`[0-9]+(.[0-9]+)?`)
+    }
   }
 
   _type() {
-    return (this instanceof Group) ? "group" : "trie"
+    // return (this instanceof Group) ? "group" : "trie"
+    return (this === this.root) ? "trie" : "group"
   }
 
   _parse_ranges(str, next) {
@@ -33,6 +42,19 @@ export class Trie {
   }
 
   /**
+   * Add a named Group
+   * @example
+   *  trie.learn("FLOAT", r`[0-9]+(.[0-9]+)?`)
+   *  trie.insert("a{FLOAT}", 1)
+   *  trie.match("a4.2")
+   * @param {string} identifier
+   * @param {string} pattern
+   */
+  learn(identifier, pattern) {
+    this.known[identifier] = new Group(pattern, this)
+  }
+
+  /**
    * Insert key-value-pair into the Trie
    * Keys can contain very(!) simple forms of regular expressions, e.g.
    *  "oo|inf(inity)?"
@@ -41,36 +63,26 @@ export class Trie {
    * @param {*} value
    */
   insert(key, value) {
-    let quantifier, optional, repeatable, group_info
-    let current = this.trie, past_nodes_since_last_required_node = []
+    let quantifier, optional, repeatable, current = this.trie, past_nodes_since_last_required_node = []
     for (let i = 0, len = key.length; i < len; i++) {
-      group_info = null
       quantifier = null
       optional = false
       repeatable = false
       // if an unescaped ( is found, handle it as a group until )
-      if (key[i] === "(" && (i < 1 || key[i - 1] !== "\\") && (i < 2 || key[i - 2] !== "\\")) { // \( and \\(
-        let s = key.substr(i), c = s.search(/[^\\]\)/), q = s.substr(c + 2, 1)
+      if (brackets.has(key[i]) && key[i - 1] !== "\\") { // \( or \{ or \[
+        let k = key[i], s = key.substr(i), group, obj, next = {}
+        let c = (k === "(") ? s.search(/[^\\]\)/) : (k === "{") ? s.search(/[^\\]\}/) : s.search(/[^\\]\]/)
         if (c === -1) throw new Error(`UnclosedBracketInRegularExpression: ${s}`)
-        group_info = {group: new Group(s.substr(1, c), this.root), next: {}}
-        if (GROUP_KEY in current) current[GROUP_KEY].push(group_info)
-        else current[GROUP_KEY] = [group_info]
-        if (quantifiers.has(q)) {
-          quantifier = q
-          optional = (quantifier !== "+")
-          repeatable = (quantifier !== "?")
-          i++
+        let p = s.substr(1, c), q = s.substr(c + 2, 1)
+        if (k === "[") {
+          obj = this._parse_ranges(p, next)
+          Object.assign(current, obj)
+        } else {
+          group = (k === "{") ? this.root.known[p] : new Group(p, this.root)
+          if (group === undefined) throw new Error(`UnknownNamedGroupInRegularExpression: ${p} in ${s}`)
+          if (GROUP_KEY in current) current[GROUP_KEY].push({group, next})
+          else current[GROUP_KEY] = [{group, next}]
         }
-        current = group_info.next
-        if (optional) past_nodes_since_last_required_node.push(current)
-        else past_nodes_since_last_required_node = [current]
-        if (repeatable) current[GROUP_KEY] = [group_info]
-        i += ++c
-      } else if (key[i] === "[" && (i < 1 || key[i - 1] !== "\\") && (i < 2 || key[i - 2] !== "\\")) { // \[ and \\[
-        let s = key.substr(i), c = s.search(/[^\\]\]/), q = s.substr(c + 2, 1), next = {}
-        if (c === -1) throw new Error(`UnclosedBracketInRegularExpression: ${s}`)
-        let obj = this._parse_ranges(s.substr(1, c), next)
-        Object.assign(current, obj)
         if (quantifiers.has(q)) {
           quantifier = q
           optional = (quantifier !== "+")
@@ -80,7 +92,8 @@ export class Trie {
         current = next
         if (optional) past_nodes_since_last_required_node.push(current)
         else past_nodes_since_last_required_node = [current]
-        if (repeatable) Object.assign(current, obj)
+        if (repeatable && k === "[") Object.assign(current, obj)
+        if (repeatable && k !== "[") current[GROUP_KEY] = [{group, next}]
         i += ++c
       } else {
         // if an unescaped | is found, leave the rest of the key to a subsequent insert()-call
@@ -98,7 +111,7 @@ export class Trie {
           repeatable = (quantifier !== "?")
         }
         // handle backslashes
-        if (key[i] === "\\") {
+        if (key[i] === "\\") { // TODO: only allow escaping where it makes sense ([{\|, remove hurdles for above
           if (i > 0 && key[i - 1] !== "\\") i++
         }
         // advance previous and current
@@ -122,7 +135,7 @@ export class Trie {
         if (!(VALUE_KEY in node)) node[VALUE_KEY] = value
       })
     }
-    if(VALUE_KEY in this.trie) throw new Error(`TautologyInRegularExpression: ${key}`)
+    if (VALUE_KEY in this.trie) throw new Error(`TautologyInRegularExpression: ${key}`)
   }
 
   /**
@@ -159,7 +172,7 @@ export class Trie {
 
 class Group extends Trie {
   constructor(group_key, root) {
-    super()
+    super(root)
     this.insert(group_key, VALUE_PLACEHOLDER)
   }
 }

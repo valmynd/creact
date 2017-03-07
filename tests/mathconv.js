@@ -4,6 +4,10 @@ import {Trie} from "../dist/mathconv/trie"
 
 const parser = new Ascii2Utf8Parser()
 const str = o => JSON.stringify(o)
+const r = String.raw
+
+//import a from "../dist/mathconv/asciimath"
+//console.log("asciimath:", str(a))
 
 test('Trie inf+i?n?i?t?y works correctly', t => {
   const trie = new Trie()
@@ -21,13 +25,13 @@ test('Trie inf+i?n?i?t?y works correctly', t => {
 
 test('Trie hel(lo) works correctly', t => { // hel(la|(lo)+)?
   const trie = new Trie()
-  trie.insert(String.raw`hel(lo)`, 1)
+  trie.insert(r`hel(lo)`, 1)
   t.deepEqual(trie.match("hello"), {value: 1, match: "hello"})
 })
 
 test('Trie hel(lo)?ya works correctly', t => { // hel(la|(lo)+)?
   const trie = new Trie()
-  trie.insert(String.raw`hel(lo)?ya`, 1)
+  trie.insert(r`hel(lo)?ya`, 1)
   t.deepEqual(trie.match("helya"), {value: 1, match: "helya"})
   t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
   t.true(trie.match("hellya") === null)
@@ -37,7 +41,7 @@ test('Trie hel(lo)?ya works correctly', t => { // hel(la|(lo)+)?
 test('Trie hel(lo)+ya works correctly', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   //console.log((trie.trie["h"]["e"]["l"]["_g"][0]))
-  trie.insert(String.raw`hel(lo)+ya`, 1)
+  trie.insert(r`hel(lo)+ya`, 1)
   t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
   t.deepEqual(trie.match("helloloya"), {value: 1, match: "helloloya"})
   t.true(trie.match("hellollya") === null) // should NOT match
@@ -46,10 +50,10 @@ test('Trie hel(lo)+ya works correctly', t => { // hel(la|(lo)+)?
 
 test('Trie a[0-9]*z works correctly', t => {
   let trie = new Trie()
-  trie.insert(String.raw`a[0-9]*z`, 1)
+  trie.insert(r`a[0-9]*z`, 1)
   t.deepEqual(trie.match("a2017z"), {value: 1, match: "a2017z"})
   trie = new Trie()
-  trie.insert(String.raw`a[0-9]*z?`, 1) // a2?z? does work
+  trie.insert(r`a[0-9]*z?`, 1) // a2?z? does work
   t.deepEqual(trie.match("a"), {value: 1, match: "a"})
   t.deepEqual(trie.match("a2z"), {value: 1, match: "a2z"})
   t.deepEqual(trie.match("a2"), {value: 1, match: "a2"})
@@ -59,10 +63,17 @@ test('Trie a[0-9]*z works correctly', t => {
 
 test('Trie [0-9]+(.[0-9]+)? works correctly', t => {
   const trie = new Trie()
-  trie.insert(String.raw`[0-9]+(.[0-9]+)?`, 1)
+  trie.insert(r`[0-9]+(.[0-9]+)?`, 1)
   t.deepEqual(trie.match("21.91"), {value: 1, match: "21.91"})
   t.deepEqual(trie.match("21"), {value: 1, match: "21"})
   t.deepEqual(trie.match("21."), {value: 1, match: "21"})
+})
+
+test('Trie named groups work', t => {
+  const trie = new Trie()
+  trie.learn("FLOAT", r`[0-9]+(.[0-9]+)`)
+  trie.insert("a{FLOATy}", 1)
+  t.deepEqual(trie.match("a4.2"), {value: 1, match: "a4.2"})
 })
 
 

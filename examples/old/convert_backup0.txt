@@ -1,4 +1,4 @@
-import {Parser} from "./parser"
+import {Parser} from "../mathconv/parser"
 const alphanumeric = /[a-zA-Z0-9]/
 
 // non-standard changes (TODO):
