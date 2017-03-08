@@ -121,20 +121,20 @@ export class Parser {
       s = this.src.substr(from)
     }
     // iterate through symbols
-    /*for (let symbol of this.recognized.values()) {
-     matches = symbol.re.exec(s)
-     if (matches !== null) {
-     //console.log(symbol.re.source, {matches})
-     let value = matches[0], to = from + value.length
-     let token = Object.create(symbol)
-     token.value = value
-     token.from = from
-     token.to = to
-     this.previousToken = this.currentToken
-     this.currentToken = token
-     return this.currentToken
-     }
-     }*/
+    for (let symbol of this.recognized.values()) {
+      matches = symbol.re.exec(s)
+      if (matches !== null) {
+        //console.log(symbol.re.source, {matches})
+        let value = matches[0], to = from + value.length
+        let token = Object.create(symbol)
+        token.value = value
+        token.from = from
+        token.to = to
+        this.previousToken = this.currentToken
+        this.currentToken = token
+        return this.currentToken
+      }
+    }
     // nothing suitable was found
     //throw `UnknownExpression: ${s}`
   }

@@ -11,11 +11,18 @@ export class Trie {
   constructor(root = null) {
     this.trie = {}
     this.root = root
-    this.known = null
     if (root === null) { // not instanceOf Group
       this.root = this
       this.known = {}
-      //this.learn("FLOAT", r`[0-9]+(.[0-9]+)?`)
+      // needed for prefix/infix/postfix operands while constructing the trie
+      this.multipleLeftOperands = false
+      this.leftOperandGroup = null
+      this.rightOperandGroup = null
+      this.operatorGroup = null
+      // needed while parsing
+      this.src = ""
+      this.previousToken = null
+      this.currentToken = null
     }
   }
 
@@ -48,20 +55,70 @@ export class Trie {
     return {group, next}
   }
 
-  _parse_named_group(str, next) {
-    let [before_colon, after_colon] = str.split(":"), group_info = {next}
+  _parse_named_group(str, next, key) {
+    let group, target, group_info, root = this.root
+    let [before_semicolon, op_type, bp = 0] = str.split(";")
+    let [before_colon, after_colon] = before_semicolon.split(":")
     if (after_colon === undefined) {
-      group_info.group = this.known[before_colon]
+      group = root.known[before_colon]
+      group_info = {group, next}
     } else {
-      let [before_semicolon, after_semicolon, after_second_semicolon] = after_colon.split(";")
-      group_info.group = this.known[before_semicolon]
-      group_info.target = before_colon
-      if (after_semicolon !== undefined) {
-        console.log({after_semicolon, after_second_semicolon})
-      }
+      group = root.known[before_semicolon]
+      target = before_colon
+      group_info = {group, target, next}
     }
-    if (group_info.group === undefined) throw new Error(`UnknownNamedGroupInRegularExpression: ${p} in ${s}`)
+    if (group === undefined) throw new Error(`UnknownNamedGroupInRegularExpression: ${str} in ${key}`)
+    if (op_type === undefined && root.operatorGroup === null) { // (potential) left operand
+      if (target !== undefined) { // must have a label associated with it, or else it just gets skipped
+        //if (root.leftOperandGroup !== null) throw new Error(`MultipleLeftOperands: ${key}`) would throw also in cases when NOT defining operators!
+        root.leftOperandGroup = group
+      }
+    } else if (op_type !== undefined) { // (eventual) operator
+      if (root.operatorGroup !== null) throw new Error(`MultipleOperators: ${key}`)
+      if (op_type === "unaryPostfix") {
+        if (root.leftOperandGroup !== null) throw new Error(`LeftOperandForPostfixOperator: ${key}`)
+        group.setupOperator(group, op_type, bp, this.leftOperandGroup, null)
+      } else { // op_type !== "unaryPostfix"
+        // keep a list of things that are needed when the rightOperand is known
+        root.operatorGroup = [group, op_type, parseInt(bp)]
+      }
+    } else { // right operand
+      if (root.leftOperandGroup === null && op_type !== "unaryPostfix") throw new Error(`MissingLeftOperand: ${key}`)
+      if (root.rightOperandGroup !== null) throw new Error(`MultipleRightOperands: ${key}`)
+      root.rightOperandGroup = group
+      let [op, op_type, bp] = root.operatorGroup
+      // connect the dots NOW that we know both the left and right operands
+      op.setupOperator(op, op_type, bp, this.leftOperandGroup, this.rightOperandGroup)
+
+      /*if (op_type === "binaryLeftAssociative") {
+       group.setupOperator(bp, null, (left) => console.log(left, root._parse_expression(bp)))
+       } else if (op_type === "binaryRightAssociative") {
+       group.setupOperator(bp, null, (left) => console.log(left, root._parse_expression(bp - 1)))
+       } else if (op_type === "unaryPrefix") {
+       group.setupOperator(bp, () => console.log(root._parse_expression(bp)))
+       } else if (op_type === "unaryPostfix") {
+       group.setupOperator(bp, () => console.log(root._parse_expression(bp - 1)))
+       } else {
+       throw new Error(`InvalidOpTypeInRegularExpression: ${op_type}`)
+       }*/
+    }
     return group_info
+  }
+
+  _parse_expression(bp = 0, expect) {
+    this.previousToken = this.currentToken
+    this.currentToken = this._advance(expect)
+    let result = this.previousToken.nud()
+    while (bp < this.currentToken.bp) {
+      this.previousToken = this.currentToken
+      this.currentToken = this._advance(expect)
+      result = this.previousToken.led(expect)
+    }
+    return left
+  }
+
+  _advance(expect) {
+
   }
 
   /**
@@ -88,7 +145,13 @@ export class Trie {
   insert(key, value) {
     let k, quantifier, optional, repeatable
     let current = this.trie, past_nodes_since_last_required_node = []
-    if (this === this.root) key = key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT)
+    if (this === this.root) {
+      key = key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT)
+      this.multipleLeftOperands = false
+      this.leftOperandGroup = null
+      this.rightOperandGroup = null
+      this.operatorGroup = null
+    }
     for (let i = 0, len = key.length; i < len; i++) {
       k = key[i]
       quantifier = null
@@ -105,7 +168,7 @@ export class Trie {
           Object.assign(current, obj)
         } else {
           if (k === "(") group_info = this._parse_group(p, next)
-          else group_info = this._parse_named_group(p, next)
+          else group_info = this._parse_named_group(p, next, key)
           if (GROUP_KEY in current) current[GROUP_KEY].push(group_info)
           else current[GROUP_KEY] = [group_info]
         }
@@ -214,6 +277,25 @@ export class Trie {
 class Group extends Trie {
   constructor(group_key, root) {
     super(root)
+    this.bp = 0
+    this.nud = null
+    this.led = null
     this.insert(group_key, VALUE_PLACEHOLDER)
+  }
+
+  setupNudLed(bp = 0, nud = null, led = null) {
+    if (bp > this.bp) this.bp = bp
+    if (nud !== null) {
+      if (this.nud === null) this.nud = nud
+      else throw "AlreadyDefinedNud"
+    }
+    if (led !== null) {
+      if (this.led === null) this.led = led
+      else throw "AlreadyDefinedLed"
+    }
+  }
+
+  setupOperator(op, op_type, bp, expect_left, expect_right) {
+
   }
 }

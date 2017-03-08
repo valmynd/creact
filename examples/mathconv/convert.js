@@ -41,7 +41,7 @@ export class Ascii2Utf8Parser extends Parser {
     super()
     this.trie.learn("WS", "[ \t\r\n\f]")
     this.trie.learn("GREEK_LETTER", Object.keys(GREEK_LETTER).join("|"))
-    this.trie.learn("OPERATOR", "+|-")
-    this.trie.insert("{left:GREEK_LETTER}{WS}*{operator:OPERATOR;binaryLeftAssociative;0}}{WS}*{right:GREEK_LETTER}", 1)
+    this.trie.learn("OP", "+|-")
+    //this.trie.insert("{left:GREEK_LETTER}{WS}*{operator:OP;binaryLeftAssociative;0}}{WS}*{right:GREEK_LETTER}", 1)
   }
 }

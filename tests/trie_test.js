@@ -91,7 +91,7 @@ test('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
   let trie = new Trie()
   trie.learn("WS", "[ \t\r\n\f]")
   trie.learn("GREEK_LETTER", Object.keys(a.TOKENS.GREEK_LETTER).join("|"))
-  trie.insert("{GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER}", 1)
+  trie.insert("{GREEK_LETTER}(+|-){GREEK_LETTER}", 1)
   t.deepEqual(trie.match("α+α"), {value: 1, match: "α+α"})
   trie = new Trie()
   trie.insert("[a-c][0-2]?[d-f]?[3-5]?[g-h]", 1)
