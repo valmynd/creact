@@ -70,7 +70,7 @@ test('Trie [0-9]+(.[0-9]+)? works', t => {
 
 test('Trie named groups work', t => {
   const trie = new Trie()
-  trie.learn("FLOAT", r`[0-9]+(.[0-9]+)`)
+  trie.define("FLOAT", r`[0-9]+(.[0-9]+)`)
   trie.insert("a{FLOAT}?", 1)
   t.deepEqual(trie.match("a4.2"), {value: 1, match: "a4.2"})
   t.deepEqual(trie.match("a"), {value: 1, match: "a"})
@@ -81,7 +81,7 @@ test('Trie backslash handling works', t => {
   trie.insert(r`a\{FLOAT}?`, 1)
   t.deepEqual(trie.match("a{FLOAT"), {value: 1, match: "a{FLOAT"})
   trie = new Trie()
-  trie.learn("FLOAT", r`[0-9]+(.[0-9]+)?`)
+  trie.define("FLOAT", r`[0-9]+(.[0-9]+)?`)
   trie.insert(r`a\\{FLOAT}?`, 1)
   //console.log(trie.trie["a"]["\\"]["_g"][0])
   t.deepEqual(trie.match("a\\2.22"), {value: 1, match: "a\\2.22"})
@@ -89,8 +89,8 @@ test('Trie backslash handling works', t => {
 
 test('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
   let trie = new Trie()
-  trie.learn("WS", "[ \t\r\n\f]")
-  trie.learn("GREEK_LETTER", Object.keys(a.TOKENS.GREEK_LETTER).join("|"))
+  trie.define("WS", "[ \t\r\n\f]")
+  trie.define("GREEK_LETTER", Object.keys(a.TOKENS.GREEK_LETTER).join("|"))
   trie.insert("{GREEK_LETTER}(+|-){GREEK_LETTER}", 1)
   t.deepEqual(trie.match("α+α"), {value: 1, match: "α+α"})
   trie = new Trie()
