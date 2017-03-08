@@ -6,7 +6,7 @@ const str = o => JSON.stringify(o)
 const r = String.raw
 
 test('Ascii2Utf8Parser works', t => {
-  //console.log(parser.parse("alpha"))
+  console.log(parser.parse("α+α"))
   //t.deepEqual(parser.parse("alpha + beta * kappa"), ['α', '+', 'β', '⋅', 'κ'])
   //t.deepEqual(parser.parse("beta ** kappa"), ['β', '∗', 'κ'])
   //console.log("parse-result:", parser.parse("sum_(i=1)^n i^3=((n(n+1))/2)^2"))

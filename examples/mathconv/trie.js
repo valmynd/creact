@@ -43,6 +43,27 @@ export class Trie {
     return obj
   }
 
+  _parse_group(str, next) {
+    let group = new Group(str, this.root)
+    return {group, next}
+  }
+
+  _parse_named_group(str, next) {
+    let [before_colon, after_colon] = str.split(":"), group_info = {next}
+    if (after_colon === undefined) {
+      group_info.group = this.known[before_colon]
+    } else {
+      let [before_semicolon, after_semicolon, after_second_semicolon] = after_colon.split(";")
+      group_info.group = this.known[before_semicolon]
+      group_info.target = before_colon
+      if (after_semicolon !== undefined) {
+        console.log({after_semicolon, after_second_semicolon})
+      }
+    }
+    if (group_info.group === undefined) throw new Error(`UnknownNamedGroupInRegularExpression: ${p} in ${s}`)
+    return group_info
+  }
+
   /**
    * Add a named Group
    * @example
@@ -75,7 +96,7 @@ export class Trie {
       repeatable = false
       // if an unescaped ( is found, handle it as a group until )
       if (brackets.has(key[i]) && key[i - 1] !== "\\") { // \( or \{ or \[
-        let s = key.substr(i), group, obj, next = {}
+        let s = key.substr(i), group_info, obj, next = {}
         let c = (k === "(") ? s.search(/[^\\]\)/) : (k === "{") ? s.search(/[^\\]\}/) : s.search(/[^\\]\]/)
         if (c === -1) throw new Error(`UnclosedBracketInRegularExpression: ${s}`)
         let p = s.substr(1, c), q = s[c + 2], qb = s[c + 1]
@@ -83,10 +104,10 @@ export class Trie {
           obj = this._parse_ranges(p, next)
           Object.assign(current, obj)
         } else {
-          group = (k === "{") ? this.root.known[p] : new Group(p, this.root)
-          if (group === undefined) throw new Error(`UnknownNamedGroupInRegularExpression: ${p} in ${s}`)
-          if (GROUP_KEY in current) current[GROUP_KEY].push({group, next})
-          else current[GROUP_KEY] = [{group, next}]
+          if (k === "(") group_info = this._parse_group(p, next)
+          else group_info = this._parse_named_group(p, next)
+          if (GROUP_KEY in current) current[GROUP_KEY].push(group_info)
+          else current[GROUP_KEY] = [group_info]
         }
         if (quantifiers.has(q) && qb !== "\\") {
           quantifier = q
@@ -98,8 +119,8 @@ export class Trie {
         if (k !== "[") {
           past_nodes_since_last_required_node.forEach(node => {
             let tmp = node[GROUP_KEY]
-            if (tmp === undefined) node[GROUP_KEY] = [{group, next}]
-            else if (tmp !== current) tmp.push({group, next})
+            if (tmp === undefined) node[GROUP_KEY] = [group_info]
+            else if (tmp !== current) tmp.push(group_info)
           })
         } else {
           past_nodes_since_last_required_node.forEach(node => {
@@ -110,7 +131,7 @@ export class Trie {
         if (optional) past_nodes_since_last_required_node.push(current)
         else past_nodes_since_last_required_node = [current]
         if (repeatable && k === "[") Object.assign(current, obj)
-        if (repeatable && k !== "[") current[GROUP_KEY] = [{group, next}]
+        if (repeatable && k !== "[") current[GROUP_KEY] = [group_info]
         i += ++c
       } else {
         // handle backslashes

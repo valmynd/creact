@@ -7,8 +7,8 @@ const ws = /^\s+/
  * @typedef {Object} Symbol
  * @property {string} re
  * @property {int} bp
- * @property {function} [nud]
- * @property {function} [led]
+ * @property {function} [nud] (handler of a token as prefix)
+ * @property {function} [led] (handler of a token as infix)
  */
 
 /**
@@ -20,13 +20,13 @@ const ws = /^\s+/
 
 /**
  * @callback UnaryOperandHandler
- * @param {string} operand
+ * @param {*} operand
  */
 
 /**
  * @callback BinaryOperandHandler
- * @param {string} left
- * @param {string} right
+ * @param {*} left
+ * @param {*} right
  */
 
 
@@ -75,7 +75,7 @@ export class Parser {
    * @param {BinaryOperandHandler} callback
    */
   binaryLeftAssociative(re, bp, callback) {
-    this._define(re, bp, null, (left) => callback(left, this.parseExpression(bp).value))
+    this._define(re, bp, null, (left) => callback(left, this.parseExpression(bp)))
   }
 
   /**
@@ -85,7 +85,7 @@ export class Parser {
    * @param {BinaryOperandHandler} callback
    */
   binaryRightAssociative(re, bp, callback) {
-    this._define(re, bp, null, (left) => callback(left, this.parseExpression(bp - 1).value))
+    this._define(re, bp, null, (left) => callback(left, this.parseExpression(bp - 1)))
   }
 
   /**
@@ -95,7 +95,7 @@ export class Parser {
    * @param {UnaryOperandHandler} callback
    */
   unaryPrefix(re, bp, callback) {
-    this._define(re, bp, () => callback(this.parseExpression(bp).value))
+    this._define(re, bp, () => callback(this.parseExpression(bp)))
   }
 
   /**
@@ -105,7 +105,7 @@ export class Parser {
    * @param {UnaryOperandHandler} callback
    */
   unaryPostfix(re, bp, callback) {
-    this._define(re, bp, null, () => callback(this.parseExpression(bp - 1).value))
+    this._define(re, bp, null, () => callback(this.parseExpression(bp - 1)))
   }
 
   /**
@@ -160,8 +160,10 @@ export class Parser {
    * @returns {Token[]}
    */
   parse(input) {
-    this.src = input
-    this.currentToken = null
-    this.previousToken = this.advance()
+    //this.src = input
+    //this.currentToken = null
+    //this.previousToken = this.advance()
+    console.log(input, this.trie.match(input))
+    return ""
   }
 }
