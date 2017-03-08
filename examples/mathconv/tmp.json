@@ -1,45 +1,205 @@
 {
   "trie": {
-    "a": {
-      "0": {
-        "3": {
-          "g": {
-            "_v": 2
+    "_g": [
+      {
+        "group": {
+          "trie": {
+            "_g": [
+              {
+                "group": {
+                  "trie": {
+                    "a": {
+                      "_v": -1
+                    },
+                    "b": "~trie~_g~0~group~trie~_g~0~group~trie~a",
+                    "c": "~trie~_g~0~group~trie~_g~0~group~trie~a",
+                    "d": "~trie~_g~0~group~trie~_g~0~group~trie~a",
+                    "e": "~trie~_g~0~group~trie~_g~0~group~trie~a"
+                  },
+                  "root": "~",
+                  "labeled": [],
+                  "priority": 0.09854370764246712
+                },
+                "next": {
+                  "_v": -1
+                }
+              },
+              {
+                "group": "Additive",
+                "next": {
+                  "_v": -1
+                }
+              },
+              {
+                "group": "Multiplicative",
+                "next": {
+                  "_v": -1
+                }
+              }
+            ]
           },
-          "h": "~trie~a~0~3~g",
-          "_v": 2
+          "root": "~",
+          "labeled": [],
+          "priority": 0.9318492030563639
         },
-        "4": "~trie~a~0~3",
-        "5": "~trie~a~0~3",
-        "d": {
-          "3": "~trie~a~0~3",
-          "4": "~trie~a~0~3",
-          "5": "~trie~a~0~3",
-          "g": "~trie~a~0~3~g",
-          "h": "~trie~a~0~3~g",
-          "_v": 2
-        },
-        "e": "~trie~a~0~d",
-        "f": "~trie~a~0~d",
-        "g": "~trie~a~0~3~g",
-        "h": "~trie~a~0~3~g",
-        "_v": 2
-      },
-      "1": "~trie~a~0",
-      "2": "~trie~a~0",
-      "3": "~trie~a~0~3",
-      "4": "~trie~a~0~3",
-      "5": "~trie~a~0~3",
-      "d": "~trie~a~0~d",
-      "e": "~trie~a~0~d",
-      "f": "~trie~a~0~d",
-      "g": "~trie~a~0~3~g",
-      "h": "~trie~a~0~3~g",
-      "_v": 2
-    },
-    "b": "~trie~a",
-    "c": "~trie~a"
+        "next": {
+          "_v": 1
+        }
+      }
+    ]
   },
   "root": "~",
-  "known": {}
+  "labeled": [],
+  "known": {
+    "WS": {
+      "trie": {
+        " ": {
+          "_v": -1
+        },
+        "\t": "~known~WS~trie~ ",
+        "\r": "~known~WS~trie~ ",
+        "\n": "~known~WS~trie~ ",
+        "\f": "~known~WS~trie~ "
+      },
+      "root": "~",
+      "labeled": [],
+      "priority": 0.975059329316319
+    },
+    "PM": {
+      "trie": {
+        "+": {
+          "_v": -1
+        },
+        "-": {
+          "_v": -1
+        }
+      },
+      "root": "~",
+      "labeled": [],
+      "priority": 0.0220241914341206
+    },
+    "MD": {
+      "trie": {
+        "*": {
+          "_v": -1
+        },
+        "/": {
+          "_v": -1
+        }
+      },
+      "root": "~",
+      "labeled": [],
+      "priority": 0.3764130652806055
+    },
+    "Variable": "~trie~_g~0~group~trie~_g~0~group",
+    "Expression": "~trie~_g~0~group",
+    "Additive": {
+      "trie": {
+        "_g": [
+          {
+            "group": "Expression",
+            "target": "left",
+            "next": {
+              "_g": [
+                {
+                  "group": "WS",
+                  "next": {
+                    "_g": [
+                      "~known~Additive~trie~_g~0~next~_g~0",
+                      {
+                        "group": "PM",
+                        "target": "operator",
+                        "next": {
+                          "_g": [
+                            {
+                              "group": "WS",
+                              "next": {
+                                "_g": [
+                                  "~known~Additive~trie~_g~0~next~_g~0~next~_g~1~next~_g~0",
+                                  {
+                                    "group": "Expression",
+                                    "target": "right",
+                                    "next": {
+                                      "_v": -1
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "~known~Additive~trie~_g~0~next~_g~0~next~_g~1~next~_g~0~next~_g~1"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                "~known~Additive~trie~_g~0~next~_g~0~next~_g~1"
+              ]
+            }
+          }
+        ]
+      },
+      "root": "~",
+      "labeled": [
+        "Expression",
+        "PM",
+        "Expression"
+      ],
+      "priority": 0.49928277285999356
+    },
+    "Multiplicative": {
+      "trie": {
+        "_g": [
+          {
+            "group": "Expression",
+            "target": "left",
+            "next": {
+              "_g": [
+                {
+                  "group": "WS",
+                  "next": {
+                    "_g": [
+                      "~known~Multiplicative~trie~_g~0~next~_g~0",
+                      {
+                        "group": "PM",
+                        "target": "operator",
+                        "next": {
+                          "_g": [
+                            {
+                              "group": "WS",
+                              "next": {
+                                "_g": [
+                                  "~known~Multiplicative~trie~_g~0~next~_g~0~next~_g~1~next~_g~0",
+                                  {
+                                    "group": "Expression",
+                                    "target": "right",
+                                    "next": {
+                                      "_v": -1
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "~known~Multiplicative~trie~_g~0~next~_g~0~next~_g~1~next~_g~0~next~_g~1"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                },
+                "~known~Multiplicative~trie~_g~0~next~_g~0~next~_g~1"
+              ]
+            }
+          }
+        ]
+      },
+      "root": "~",
+      "labeled": [
+        "Expression",
+        "PM",
+        "Expression"
+      ],
+      "priority": 0.9403949630189286
+    }
+  }
 }

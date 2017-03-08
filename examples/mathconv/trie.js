@@ -7,6 +7,23 @@ const escapable = new Set(["(", "{", "[", "|"])
 const brackets = new Set(["(", "{", "["])
 const r = String.raw
 
+/**
+ * idea for operator precedence:
+ * - we have arrays for the keyword _g at various positions in the trie
+ * - e.g. we may have a rule Expression: {Literal}|{Multiplication}|{Addition}{Subtraction}
+ *    - Multiplication could be defined as {left:Expression}{WS}*{operator:OP}{WS}*{right:Expression}
+ *    - we end up having something like known["Expression"] = {"_g": [...]}
+ * - all we need to do is sort that array by the binding power of each!
+ */
+
+/**
+ * @typedef {Object} GroupInfo
+ * @property {string|Group} group
+ * @property {function} [nud] (handler of a token as prefix)
+ * @property {function} [led] (handler of a token as infix)
+ */
+
+
 export class Trie {
   constructor(root = null) {
     this.trie = {}
@@ -15,10 +32,6 @@ export class Trie {
     if (root === null) { // not instanceOf Group
       this.root = this
       this.known = {}
-      // needed while parsing
-      this.src = ""
-      this.previousToken = null
-      this.currentToken = null
     }
   }
 
@@ -52,13 +65,13 @@ export class Trie {
   }
 
   _parse_named_group(str, next) {
-    let group, target, root = this.root, s = str.split(":")
+    let group, target, known = this.root.known, s = str.split(":")
     if (s.length === 1) {
-      group = root.known[s[0]]
+      group = s[0] // only strings for now, could be circular definition, replaced ad-hoc in match()
       return {group, next}
     } else {
+      group = s[1]
       target = s[0]
-      group = root.known[s[1]]
       this.labeled.push(group)
       return {group, target, next}
     }
@@ -83,54 +96,54 @@ export class Trie {
 
   /**
    * define Binary Left-Associative Operator
+   * @param {int} priority
    * @param {string} identifier
    * @param {string} pattern
-   * @param {int} bp
    */
-  defineBinaryLeftAssociative(identifier, pattern, bp = 0) {
+  defineBinaryLeftAssociative(priority, identifier, pattern) {
     let labeled_groups = this.define(identifier, pattern)
-    if (labeled_groups.length !== 3) throw new Error(`InvalidBinaryOperator: ${identifier}`)
+    if (labeled_groups.length !== 3) throw new Error(`InvalidBinaryOperator: ${pattern}`)
     let [left, op, right] = labeled_groups
-    op.setupOperator(bp, null, (left) => console.log(left, "parseExpression(bp)"), left, right)
+    //op.priority = priority
   }
 
   /**
    * define Binary Right-Associative Operator
+   * @param {int} priority
    * @param {string} identifier
    * @param {string} pattern
-   * @param {int} bp
    */
-  defineBinaryRightAssociative(identifier, pattern, bp = 0) {
+  defineBinaryRightAssociative(priority, identifier, pattern) {
     let labeled_groups = this.define(identifier, pattern)
-    if (labeled_groups.length !== 3) throw new Error(`InvalidBinaryOperator: ${identifier}`)
+    if (labeled_groups.length !== 3) throw new Error(`InvalidBinaryOperator: ${pattern}`)
     let [left, op, right] = labeled_groups
-    op.setupOperator(bp, null, (left) => console.log(left, "parseExpression(bp - 1)"), left, right)
+    //op.priority = priority
   }
 
   /**
    * define Unary Prefix Operator
+   * @param {int} priority
    * @param {string} identifier
    * @param {string} pattern
-   * @param {int} bp
    */
-  defineUnaryPrefix(identifier, pattern, bp = 0) {
+  defineUnaryPrefix(priority, identifier, pattern) {
     let labeled_groups = this.define(identifier, pattern)
-    if (labeled_groups.length !== 2) throw new Error(`InvalidUnaryOperator: ${identifier}`)
+    if (labeled_groups.length !== 2) throw new Error(`InvalidUnaryOperator: ${pattern}`)
     let [op, right] = labeled_groups
-    op.setupOperator(bp, () => console.log("parseExpression(bp)"), null, null, right)
+    //op.priority = priority
   }
 
   /**
    * define Unary Postfix Operator
+   * @param {int} priority
    * @param {string} identifier
    * @param {string} pattern
-   * @param {int} bp
    */
-  defineUnaryPostfix(identifier, pattern, bp = 0) {
+  defineUnaryPostfix(priority, identifier, pattern) {
     let labeled_groups = this.define(identifier, pattern)
-    if (labeled_groups.length !== 2) throw new Error(`InvalidUnaryOperator: ${identifier}`)
+    if (labeled_groups.length !== 2) throw new Error(`InvalidUnaryOperator: ${pattern}`)
     let [left, op] = labeled_groups
-    op.setupOperator(bp, () => console.log("parseExpression(bp - 1)"), null, left, null)
+    //op.priority = priority
   }
 
   /**
@@ -162,9 +175,8 @@ export class Trie {
         } else {
           if (k === "(") group_info = this._parse_group(p, next)
           else group_info = this._parse_named_group(p, next, key)
-          if (group_info.group === undefined) throw new Error(`UnknownNamedGroupInRegularExpression: ${p} in ${key}`)
-          if (GROUP_KEY in current) current[GROUP_KEY].push(group_info)
-          else current[GROUP_KEY] = [group_info]
+          if (GROUP_KEY in current) current[GROUP_KEY].add(group_info)
+          else current[GROUP_KEY] = new Set([group_info])
         }
         if (quantifiers.has(q) && qb !== "\\") {
           quantifier = q
@@ -176,8 +188,8 @@ export class Trie {
         if (k !== "[") {
           past_nodes_since_last_required_node.forEach(node => {
             let tmp = node[GROUP_KEY]
-            if (tmp === undefined) node[GROUP_KEY] = [group_info]
-            else if (tmp !== current) tmp.push(group_info)
+            if (tmp === undefined) node[GROUP_KEY] = new Set([group_info])
+            else if (tmp !== current) tmp.add(group_info)
           })
         } else {
           past_nodes_since_last_required_node.forEach(node => {
@@ -188,7 +200,7 @@ export class Trie {
         if (optional) past_nodes_since_last_required_node.push(current)
         else past_nodes_since_last_required_node = [current]
         if (repeatable && k === "[") Object.assign(current, obj)
-        if (repeatable && k !== "[") current[GROUP_KEY] = [group_info]
+        if (repeatable && k !== "[") current[GROUP_KEY] = new Set([group_info])
         i += ++c
       } else {
         // handle backslashes
@@ -251,11 +263,20 @@ export class Trie {
         g = current[GROUP_KEY]
         if (g === undefined) break
         if (g.length === 0) throw new Error("Should never happen: Empty group-list in Trie")
-        for (let {group, next} of g) {
-          m = group.match(str.substr(i))
+        if (g.length > 1) {
+          g = g.sort((a, b) => a.group.priority - b.group.priority)
+          // FLAW: now we may know e.g. if we first parse multiplication, then subtraction
+          // but do actually wanted to know, whether to continue parsing to the right when we're in either of those
+          console.log(g)
+        }
+        for (let group_info of g) {
+          if (typeof group_info.group === "string") {
+            group_info.group = this.root.known[group_info.group]
+          }
+          m = group_info.group.match(str.substr(i))
           if (m !== null) {
             i += m.match.length - 1
-            current = next
+            current = group_info.next
             break
           }
         }
@@ -271,9 +292,10 @@ export class Trie {
 class Group extends Trie {
   constructor(group_key, root) {
     super(root)
-    this.bp = 0
-    this.nud = null
-    this.led = null
+    this.priority = Math.random()
+    /*this.bp = 0
+     this.nud = null
+     this.led = null*/
     this.insert(group_key, VALUE_PLACEHOLDER)
   }
 
