@@ -31,7 +31,8 @@ export class Trie {
     this.labeled = []
     if (root === null) { // not instanceOf Group
       this.root = this
-      this.known = {}
+      this.known = {} // maps group-ids to group-nodes
+      this.unresolved = new Map() // maps group-ids to group_info-objects which couldn't be resolved yet
     }
   }
 
@@ -65,16 +66,29 @@ export class Trie {
   }
 
   _parse_named_group(str, next) {
-    let group, target, known = this.root.known, s = str.split(":")
+    let group, target, group_info, root = this.root, s = str.split(":")
     if (s.length === 1) {
-      group = s[0] // only strings for now, could be circular definition, replaced ad-hoc in match()
-      return {group, next}
+      group = s[0] // only strings for now, could be circular definition, replaced in _resolve()
+      group_info = {group, next}
     } else {
       group = s[1]
       target = s[0]
-      this.labeled.push(group)
-      return {group, target, next}
+      this.labeled.push(s[1])
+      group_info = {group, target, next}
     }
+    let g = root.known[group]
+    if (g !== undefined) group_info.group = g
+    else root.unresolved.set(group, group_info)
+    return group_info
+  }
+
+  _resolve() {
+    for (let [group_name, group_info] of this.unresolved) {
+      let group = this.known[group_name]
+      if (group === undefined) throw new Error(`UnresolvableGroup: ${group_name}`)
+      group_info.group = group
+    }
+    this.unresolved.clear()
   }
 
   /**
@@ -255,6 +269,7 @@ export class Trie {
    */
   match(str) {
     let n, g, m, i = 0, current = this.trie
+    if (this === this.root && this.unresolved.size !== 0) this._resolve()
     for (let len = str.length; i < len; i++) {
       n = current[str[i]]
       if (n !== undefined) {
@@ -269,14 +284,11 @@ export class Trie {
           // but do actually wanted to know, whether to continue parsing to the right when we're in either of those
           console.log(g)
         }
-        for (let group_info of g) {
-          if (typeof group_info.group === "string") {
-            group_info.group = this.root.known[group_info.group]
-          }
-          m = group_info.group.match(str.substr(i))
+        for (let {group, next} of g) {
+          m = group.match(str.substr(i))
           if (m !== null) {
             i += m.match.length - 1
-            current = group_info.next
+            current = next
             break
           }
         }

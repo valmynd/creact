@@ -18,20 +18,151 @@
                   },
                   "root": "~",
                   "labeled": [],
-                  "priority": 0.09854370764246712
+                  "priority": 0.9051459223924416
                 },
                 "next": {
                   "_v": -1
                 }
               },
               {
-                "group": "Additive",
+                "group": {
+                  "trie": {
+                    "_g": [
+                      {
+                        "group": "~trie~_g~0~group",
+                        "target": "left",
+                        "next": {
+                          "_g": [
+                            {
+                              "group": {
+                                "trie": {
+                                  " ": {
+                                    "_v": -1
+                                  },
+                                  "\t": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~group~trie~ ",
+                                  "\r": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~group~trie~ ",
+                                  "\n": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~group~trie~ ",
+                                  "\f": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~group~trie~ "
+                                },
+                                "root": "~",
+                                "labeled": [],
+                                "priority": 0.597726250989504
+                              },
+                              "next": {
+                                "_g": [
+                                  "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0",
+                                  {
+                                    "group": {
+                                      "trie": {
+                                        "+": {
+                                          "_v": -1
+                                        },
+                                        "-": {
+                                          "_v": -1
+                                        }
+                                      },
+                                      "root": "~",
+                                      "labeled": [],
+                                      "priority": 0.3845104083756954
+                                    },
+                                    "target": "operator",
+                                    "next": {
+                                      "_g": [
+                                        {
+                                          "group": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~group",
+                                          "next": {
+                                            "_g": [
+                                              "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~next~_g~1~next~_g~0",
+                                              {
+                                                "group": "~trie~_g~0~group",
+                                                "target": "right",
+                                                "next": {
+                                                  "_v": -1
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~next~_g~1~next~_g~0~next~_g~1"
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~next~_g~1"
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "root": "~",
+                  "labeled": [
+                    "Expression",
+                    "PM",
+                    "Expression"
+                  ],
+                  "priority": 0.3175494290169889
+                },
                 "next": {
                   "_v": -1
                 }
               },
               {
-                "group": "Multiplicative",
+                "group": {
+                  "trie": {
+                    "_g": [
+                      {
+                        "group": "~trie~_g~0~group",
+                        "target": "left",
+                        "next": {
+                          "_g": [
+                            {
+                              "group": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~group",
+                              "next": {
+                                "_g": [
+                                  "~trie~_g~0~group~trie~_g~2~group~trie~_g~0~next~_g~0",
+                                  {
+                                    "group": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~next~_g~1~group",
+                                    "target": "operator",
+                                    "next": {
+                                      "_g": [
+                                        {
+                                          "group": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~group",
+                                          "next": {
+                                            "_g": [
+                                              "~trie~_g~0~group~trie~_g~2~group~trie~_g~0~next~_g~0~next~_g~1~next~_g~0",
+                                              {
+                                                "group": "~trie~_g~0~group",
+                                                "target": "right",
+                                                "next": {
+                                                  "_v": -1
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "~trie~_g~0~group~trie~_g~2~group~trie~_g~0~next~_g~0~next~_g~1~next~_g~0~next~_g~1"
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "~trie~_g~0~group~trie~_g~2~group~trie~_g~0~next~_g~0~next~_g~1"
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "root": "~",
+                  "labeled": [
+                    "Expression",
+                    "PM",
+                    "Expression"
+                  ],
+                  "priority": 0.5310560831742133
+                },
                 "next": {
                   "_v": -1
                 }
@@ -40,7 +171,7 @@
           },
           "root": "~",
           "labeled": [],
-          "priority": 0.9318492030563639
+          "priority": 0.4091103242379115
         },
         "next": {
           "_v": 1
@@ -51,33 +182,8 @@
   "root": "~",
   "labeled": [],
   "known": {
-    "WS": {
-      "trie": {
-        " ": {
-          "_v": -1
-        },
-        "\t": "~known~WS~trie~ ",
-        "\r": "~known~WS~trie~ ",
-        "\n": "~known~WS~trie~ ",
-        "\f": "~known~WS~trie~ "
-      },
-      "root": "~",
-      "labeled": [],
-      "priority": 0.975059329316319
-    },
-    "PM": {
-      "trie": {
-        "+": {
-          "_v": -1
-        },
-        "-": {
-          "_v": -1
-        }
-      },
-      "root": "~",
-      "labeled": [],
-      "priority": 0.0220241914341206
-    },
+    "WS": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~group",
+    "PM": "~trie~_g~0~group~trie~_g~1~group~trie~_g~0~next~_g~0~next~_g~1~group",
     "MD": {
       "trie": {
         "*": {
@@ -89,117 +195,12 @@
       },
       "root": "~",
       "labeled": [],
-      "priority": 0.3764130652806055
+      "priority": 0.11118910401861659
     },
     "Variable": "~trie~_g~0~group~trie~_g~0~group",
     "Expression": "~trie~_g~0~group",
-    "Additive": {
-      "trie": {
-        "_g": [
-          {
-            "group": "Expression",
-            "target": "left",
-            "next": {
-              "_g": [
-                {
-                  "group": "WS",
-                  "next": {
-                    "_g": [
-                      "~known~Additive~trie~_g~0~next~_g~0",
-                      {
-                        "group": "PM",
-                        "target": "operator",
-                        "next": {
-                          "_g": [
-                            {
-                              "group": "WS",
-                              "next": {
-                                "_g": [
-                                  "~known~Additive~trie~_g~0~next~_g~0~next~_g~1~next~_g~0",
-                                  {
-                                    "group": "Expression",
-                                    "target": "right",
-                                    "next": {
-                                      "_v": -1
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            "~known~Additive~trie~_g~0~next~_g~0~next~_g~1~next~_g~0~next~_g~1"
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                "~known~Additive~trie~_g~0~next~_g~0~next~_g~1"
-              ]
-            }
-          }
-        ]
-      },
-      "root": "~",
-      "labeled": [
-        "Expression",
-        "PM",
-        "Expression"
-      ],
-      "priority": 0.49928277285999356
-    },
-    "Multiplicative": {
-      "trie": {
-        "_g": [
-          {
-            "group": "Expression",
-            "target": "left",
-            "next": {
-              "_g": [
-                {
-                  "group": "WS",
-                  "next": {
-                    "_g": [
-                      "~known~Multiplicative~trie~_g~0~next~_g~0",
-                      {
-                        "group": "PM",
-                        "target": "operator",
-                        "next": {
-                          "_g": [
-                            {
-                              "group": "WS",
-                              "next": {
-                                "_g": [
-                                  "~known~Multiplicative~trie~_g~0~next~_g~0~next~_g~1~next~_g~0",
-                                  {
-                                    "group": "Expression",
-                                    "target": "right",
-                                    "next": {
-                                      "_v": -1
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            "~known~Multiplicative~trie~_g~0~next~_g~0~next~_g~1~next~_g~0~next~_g~1"
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                "~known~Multiplicative~trie~_g~0~next~_g~0~next~_g~1"
-              ]
-            }
-          }
-        ]
-      },
-      "root": "~",
-      "labeled": [
-        "Expression",
-        "PM",
-        "Expression"
-      ],
-      "priority": 0.9403949630189286
-    }
-  }
+    "Additive": "~trie~_g~0~group~trie~_g~1~group",
+    "Multiplicative": "~trie~_g~0~group~trie~_g~2~group"
+  },
+  "unresolved": []
 }

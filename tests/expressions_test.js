@@ -15,7 +15,7 @@ test('Trie expressions work', t => {
   trie.define("PM", "+|-")
   trie.define("MD", "*|/")
   trie.define("Variable", "[a-e]")
-  trie.define("Expression", "{Variable}|{Additive}|{Multiplicative}")// FIXME
+  trie.define("Expression", "{Variable}|{Additive}|{Multiplicative}")
   trie.defineBinaryLeftAssociative(1, "Additive", "{left:Expression}{WS}*{operator:PM}{WS}*{right:Expression}")
   trie.defineBinaryLeftAssociative(2, "Multiplicative", "{left:Expression}{WS}*{operator:PM}{WS}*{right:Expression}")
   trie.insert("{Expression}", 1)
