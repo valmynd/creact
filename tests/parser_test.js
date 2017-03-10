@@ -1,7 +1,7 @@
 import test from "ava"
 import {Ascii2Utf8Parser} from "../dist/mathconv/convert"
 
-const parser = new Ascii2Utf8Parser()
+//const parser = new Ascii2Utf8Parser()
 const str = o => JSON.stringify(o)
 const r = String.raw
 
