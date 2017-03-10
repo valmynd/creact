@@ -156,7 +156,7 @@ export class Trie {
    */
   insert(key, value) {
     let k, quantifier, optional, repeatable
-    let current = this.trie, past_nodes_since_last_required_node = []
+    let current = this.trie, value_nodes = [], group_nodes = new Set()
     if (this === this.root) key = key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT)
     for (let i = 0, len = key.length; i < len; i++) {
       k = key[i]
@@ -177,6 +177,7 @@ export class Trie {
           else group_info = this._parse_named_group(p, next, key)
           if (GROUP_KEY in current) current[GROUP_KEY].add(group_info)
           else current[GROUP_KEY] = new Set([group_info])
+          group_nodes.add(current)
         }
         if (quantifiers.has(q) && qb !== "\\") {
           quantifier = q
@@ -185,22 +186,23 @@ export class Trie {
           i++
         }
         current = next
-        if (k !== "[") {
-          past_nodes_since_last_required_node.forEach(node => {
-            let tmp = node[GROUP_KEY]
-            if (tmp === undefined) node[GROUP_KEY] = new Set([group_info])
-            else if (tmp !== current) tmp.add(group_info)
-          })
-        } else {
-          past_nodes_since_last_required_node.forEach(node => {
-            //let fk = Object.keys(obj)[0]; console.log(node[fk] !== current)
-            Object.assign(node, obj) // might be costly, but it works
-          })
+        if (k === "[") value_nodes.forEach(node => Object.assign(node, obj))
+        else value_nodes.forEach(node => {
+          let tmp = node[GROUP_KEY]
+          if (tmp === undefined) node[GROUP_KEY] = new Set([group_info])
+          else if (tmp !== current) tmp.add(group_info)
+          group_nodes.add(node)
+        })
+        if (optional) value_nodes.push(current)
+        else value_nodes = [current]
+        if (repeatable) {
+          if (k === "[") {
+            Object.assign(current, obj)
+          } else {
+            current[GROUP_KEY] = new Set([group_info])
+            group_nodes.add(current)
+          }
         }
-        if (optional) past_nodes_since_last_required_node.push(current)
-        else past_nodes_since_last_required_node = [current]
-        if (repeatable && k === "[") Object.assign(current, obj)
-        if (repeatable && k !== "[") current[GROUP_KEY] = new Set([group_info])
         i += ++c
       } else {
         // handle backslashes
@@ -226,14 +228,14 @@ export class Trie {
         }
         // advance previous and current
         current = current[k] || (current[k] = {})
-        past_nodes_since_last_required_node.forEach(node => {
+        value_nodes.forEach(node => {
           let tmp = node[k]
           if (tmp === undefined) node[k] = current
           else if (tmp !== current) Object.assign(tmp, current)
         })
         // handle quantifiers
-        if (optional) past_nodes_since_last_required_node.push(current)
-        else past_nodes_since_last_required_node = [current]
+        if (optional) value_nodes.push(current)
+        else value_nodes = [current]
         if (repeatable) current[k] = current
         if (quantifier !== null) i++
       }
@@ -241,7 +243,7 @@ export class Trie {
     // assign value to nodes that should cause a match
     if (!(VALUE_KEY in current)) current[VALUE_KEY] = value
     if (optional) { // last node is not required
-      past_nodes_since_last_required_node.forEach(node => {
+      value_nodes.forEach(node => {
         if (!(VALUE_KEY in node)) node[VALUE_KEY] = value
       })
     }
@@ -263,12 +265,6 @@ export class Trie {
         g = current[GROUP_KEY]
         if (g === undefined) break
         if (g.length === 0) throw new Error("Should never happen: Empty group-list in Trie")
-        if (g.length > 1) {
-          g = g.sort((a, b) => a.group.priority - b.group.priority)
-          // FLAW: now we may know e.g. if we first parse multiplication, then subtraction
-          // but do actually wanted to know, whether to continue parsing to the right when we're in either of those
-          console.log(g)
-        }
         for (let group_info of g) {
           if (typeof group_info.group === "string") {
             group_info.group = this.root.known[group_info.group]
@@ -292,10 +288,6 @@ export class Trie {
 class Group extends Trie {
   constructor(group_key, root) {
     super(root)
-    this.priority = Math.random()
-    /*this.bp = 0
-     this.nud = null
-     this.led = null*/
     this.insert(group_key, VALUE_PLACEHOLDER)
   }
 

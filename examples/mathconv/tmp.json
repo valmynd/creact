@@ -17,8 +17,7 @@
                     "e": "~trie~_g~0~group~trie~_g~0~group~trie~a"
                   },
                   "root": "~",
-                  "labeled": [],
-                  "priority": 0.09854370764246712
+                  "labeled": []
                 },
                 "next": {
                   "_v": -1
@@ -39,8 +38,7 @@
             ]
           },
           "root": "~",
-          "labeled": [],
-          "priority": 0.9318492030563639
+          "labeled": []
         },
         "next": {
           "_v": 1
@@ -62,8 +60,7 @@
         "\f": "~known~WS~trie~ "
       },
       "root": "~",
-      "labeled": [],
-      "priority": 0.975059329316319
+      "labeled": []
     },
     "PM": {
       "trie": {
@@ -75,8 +72,7 @@
         }
       },
       "root": "~",
-      "labeled": [],
-      "priority": 0.0220241914341206
+      "labeled": []
     },
     "MD": {
       "trie": {
@@ -88,8 +84,7 @@
         }
       },
       "root": "~",
-      "labeled": [],
-      "priority": 0.3764130652806055
+      "labeled": []
     },
     "Variable": "~trie~_g~0~group~trie~_g~0~group",
     "Expression": "~trie~_g~0~group",
@@ -144,8 +139,7 @@
         "Expression",
         "PM",
         "Expression"
-      ],
-      "priority": 0.49928277285999356
+      ]
     },
     "Multiplicative": {
       "trie": {
@@ -198,8 +192,7 @@
         "Expression",
         "PM",
         "Expression"
-      ],
-      "priority": 0.9403949630189286
+      ]
     }
   }
 }
