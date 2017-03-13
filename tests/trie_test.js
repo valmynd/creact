@@ -34,7 +34,6 @@ test('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
   t.deepEqual(trie.match("helya"), {value: 1, match: "helya"})
   t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
   t.true(trie.match("hellya") === null)
-  //console.log(str(trie.trie))
 })
 
 test('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
@@ -63,12 +62,13 @@ test('Trie a[0-9]*z works', t => {
 test('Trie [0-9]+(.[0-9]+)? works', t => {
   const trie = new Trie()
   trie.insert(r`[0-9]+(.[0-9]+)?`, 1)
+  console.log(str(trie))
   t.deepEqual(trie.match("21.91"), {value: 1, match: "21.91"})
   t.deepEqual(trie.match("21"), {value: 1, match: "21"})
   t.deepEqual(trie.match("21."), {value: 1, match: "21"})
 })
 
-test('Trie named groups work', t => {
+test.skip('Trie named groups work', t => {
   const trie = new Trie()
   trie.define("FLOAT", r`[0-9]+(.[0-9]+)`)
   trie.insert("a{FLOAT}?", 1)
@@ -76,7 +76,7 @@ test('Trie named groups work', t => {
   t.deepEqual(trie.match("a"), {value: 1, match: "a"})
 })
 
-test('Trie backslash handling works', t => {
+test.skip('Trie backslash handling works', t => {
   let trie = new Trie()
   trie.insert(r`a\{FLOAT}?`, 1)
   t.deepEqual(trie.match("a{FLOAT"), {value: 1, match: "a{FLOAT"})
@@ -87,7 +87,7 @@ test('Trie backslash handling works', t => {
   t.deepEqual(trie.match("a\\2.22"), {value: 1, match: "a\\2.22"})
 })
 
-test('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
+test.skip('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
   let trie = new Trie()
   trie.define("WS", "[ \t\r\n\f]")
   trie.define("GREEK_LETTER", Object.keys(a.TOKENS.GREEK_LETTER).join("|"))

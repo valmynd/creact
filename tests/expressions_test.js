@@ -9,7 +9,7 @@ import a from "../dist/mathconv/asciimath"
 //console.log("asciimath:", str(a))
 
 
-test('Trie expressions work', t => {
+test.skip('Trie expressions work', t => {
   let trie = new Trie()
   trie.define("WS", "[ \t\r\n\f]")
   trie.define("PM", "+|-")

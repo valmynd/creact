@@ -59,9 +59,10 @@ export class Trie {
     return obj
   }
 
-  _parse_group(str, next) {
-    let group = new Group(str, this.root)
-    return {group, next}
+  _parse_group(str, next, repeatable) {
+    let group = new Group(this.root)
+    let value_nodes = group.insert(str, VALUE_PLACEHOLDER)
+    return {group, value_nodes, next, repeatable}
   }
 
   _parse_named_group(str, next) {
@@ -156,7 +157,7 @@ export class Trie {
    */
   insert(key, value) {
     let k, quantifier, optional, repeatable
-    let current = this.trie, value_nodes = [], group_nodes = new Set()
+    let current = this.trie, value_nodes = new Set(), group_nodes = new Set()
     if (this === this.root) key = key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT)
     for (let i = 0, len = key.length; i < len; i++) {
       k = key[i]
@@ -169,40 +170,36 @@ export class Trie {
         let c = (k === "(") ? s.search(/[^\\]\)/) : (k === "{") ? s.search(/[^\\]\}/) : s.search(/[^\\]\]/)
         if (c === -1) throw new Error(`UnclosedBracketInRegularExpression: ${s}`)
         let p = s.substr(1, c), q = s[c + 2], qb = s[c + 1]
-        if (k === "[") {
-          obj = this._parse_ranges(p, next)
-          Object.assign(current, obj)
-        } else {
-          if (k === "(") group_info = this._parse_group(p, next)
-          else group_info = this._parse_named_group(p, next, key)
-          if (GROUP_KEY in current) current[GROUP_KEY].add(group_info)
-          else current[GROUP_KEY] = new Set([group_info])
-          group_nodes.add(current)
-        }
         if (quantifiers.has(q) && qb !== "\\") {
           quantifier = q
           optional = (quantifier !== "+")
           repeatable = (quantifier !== "?")
           i++
         }
-        current = next
-        if (k === "[") value_nodes.forEach(node => Object.assign(node, obj))
-        else value_nodes.forEach(node => {
-          let tmp = node[GROUP_KEY]
-          if (tmp === undefined) node[GROUP_KEY] = new Set([group_info])
-          else if (tmp !== current) tmp.add(group_info)
-          group_nodes.add(node)
-        })
-        if (optional) value_nodes.push(current)
-        else value_nodes = [current]
-        if (repeatable) {
-          if (k === "[") {
-            Object.assign(current, obj)
-          } else {
-            current[GROUP_KEY] = new Set([group_info])
-            group_nodes.add(current)
-          }
+        if (k === "[") {
+          obj = this._parse_ranges(p, next)
+          Object.assign(current, obj)
+          if (repeatable) Object.assign(next, obj)
+          value_nodes.forEach(node => Object.assign(node, obj))
+        } else {
+          if (k === "(") group_info = this._parse_group(p, next, repeatable)
+          else group_info = this._parse_named_group(p, next, key)
+          if (GROUP_KEY in current) current[GROUP_KEY].add(group_info)
+          else current[GROUP_KEY] = new Set([group_info])
+          group_nodes.add(current)
+          value_nodes.forEach(node => {
+            let tmp = node[GROUP_KEY]
+            if (tmp === undefined) {
+              node[GROUP_KEY] = new Set([group_info])
+              group_nodes.add(node)
+            } else if (tmp !== current) {
+              tmp.add(group_info)
+            }
+          })
         }
+        current = next
+        if (!optional) value_nodes.clear()
+        value_nodes.add(current)
         i += ++c
       } else {
         // handle backslashes
@@ -234,20 +231,34 @@ export class Trie {
           else if (tmp !== current) Object.assign(tmp, current)
         })
         // handle quantifiers
-        if (optional) value_nodes.push(current)
-        else value_nodes = [current]
+        if (!optional) value_nodes.clear()
+        value_nodes.add(current)
         if (repeatable) current[k] = current
         if (quantifier !== null) i++
       }
     }
     // assign value to nodes that should cause a match
-    if (!(VALUE_KEY in current)) current[VALUE_KEY] = value
-    if (optional) { // last node is not required
+    if (!optional) value_nodes.clear()
+    value_nodes.add(current)
+    if (this.root === this) {
       value_nodes.forEach(node => {
         if (!(VALUE_KEY in node)) node[VALUE_KEY] = value
       })
     }
-    if (VALUE_KEY in this.trie) throw new Error(`TautologyInRegularExpression: ${key}`)
+    // merge group-nodes with the trie
+    for (let node of group_nodes) {
+      for (let {group, value_nodes, next, repeatable} of node[GROUP_KEY]) {
+        if (typeof group === "string") group = this.root.known[group]
+        Object.assign(node, group.trie)
+        if (repeatable) Object.assign(next, group.trie)
+        value_nodes.forEach(vn => {
+          if (next === current) vn[VALUE_KEY] = value
+          else Object.assign(vn, next)
+        })
+      }
+      delete node[GROUP_KEY]
+    }
+    return value_nodes
   }
 
   /**
@@ -256,41 +267,26 @@ export class Trie {
    * @returns {{match: string, value: *}|null}
    */
   match(str) {
-    let n, g, m, i = 0, current = this.trie
+    let n, v, i = 0, current = this.trie
+    let last_value = null, last_value_i = 0
     for (let len = str.length; i < len; i++) {
       n = current[str[i]]
-      if (n !== undefined) {
-        current = n
-      } else {
-        g = current[GROUP_KEY]
-        if (g === undefined) break
-        if (g.length === 0) throw new Error("Should never happen: Empty group-list in Trie")
-        for (let group_info of g) {
-          if (typeof group_info.group === "string") {
-            group_info.group = this.root.known[group_info.group]
-          }
-          m = group_info.group.match(str.substr(i))
-          if (m !== null) {
-            i += m.match.length - 1
-            current = group_info.next
-            break
-          }
-        }
-        if (m === null) break
+      if (n === undefined) break
+      // keep track of last value
+      v = n[VALUE_KEY]
+      if (v !== undefined) {
+        last_value = v
+        last_value_i = i
       }
+      // advance
+      current = n
     }
-    let value = current[VALUE_KEY]
-    if (value === undefined) return null
-    return {match: str.substr(0, i), value}
+    if (last_value === null) return null
+    return {match: str.substr(0, last_value_i + 1), value: last_value}
   }
 }
 
 class Group extends Trie {
-  constructor(group_key, root) {
-    super(root)
-    this.insert(group_key, VALUE_PLACEHOLDER)
-  }
-
   setupOperator(bp = 0, nud = null, led = null, expect_left = null, expect_right = null) {
     if (bp > this.bp) this.bp = bp
     if (nud !== null) {

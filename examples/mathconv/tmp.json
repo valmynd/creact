@@ -1,198 +1,53 @@
 {
   "trie": {
-    "_g": [
-      {
-        "group": {
-          "trie": {
-            "_g": [
-              {
-                "group": {
-                  "trie": {
-                    "a": {
-                      "_v": -1
-                    },
-                    "b": "~trie~_g~0~group~trie~_g~0~group~trie~a",
-                    "c": "~trie~_g~0~group~trie~_g~0~group~trie~a",
-                    "d": "~trie~_g~0~group~trie~_g~0~group~trie~a",
-                    "e": "~trie~_g~0~group~trie~_g~0~group~trie~a"
-                  },
-                  "root": "~",
-                  "labeled": []
-                },
-                "next": {
-                  "_v": -1
-                }
-              },
-              {
-                "group": "Additive",
-                "next": {
-                  "_v": -1
-                }
-              },
-              {
-                "group": "Multiplicative",
-                "next": {
-                  "_v": -1
-                }
-              }
-            ]
-          },
-          "root": "~",
-          "labeled": []
-        },
-        "next": {
+    "0": {
+      "0": "~trie~0",
+      "1": "~trie~0",
+      "2": "~trie~0",
+      "3": "~trie~0",
+      "4": "~trie~0",
+      "5": "~trie~0",
+      "6": "~trie~0",
+      "7": "~trie~0",
+      "8": "~trie~0",
+      "9": "~trie~0",
+      "_v": 1,
+      ".": {
+        "0": {
+          "0": "~trie~0~.~0",
+          "1": "~trie~0~.~0",
+          "2": "~trie~0~.~0",
+          "3": "~trie~0~.~0",
+          "4": "~trie~0~.~0",
+          "5": "~trie~0~.~0",
+          "6": "~trie~0~.~0",
+          "7": "~trie~0~.~0",
+          "8": "~trie~0~.~0",
+          "9": "~trie~0~.~0",
           "_v": 1
-        }
+        },
+        "1": "~trie~0~.~0",
+        "2": "~trie~0~.~0",
+        "3": "~trie~0~.~0",
+        "4": "~trie~0~.~0",
+        "5": "~trie~0~.~0",
+        "6": "~trie~0~.~0",
+        "7": "~trie~0~.~0",
+        "8": "~trie~0~.~0",
+        "9": "~trie~0~.~0"
       }
-    ]
+    },
+    "1": "~trie~0",
+    "2": "~trie~0",
+    "3": "~trie~0",
+    "4": "~trie~0",
+    "5": "~trie~0",
+    "6": "~trie~0",
+    "7": "~trie~0",
+    "8": "~trie~0",
+    "9": "~trie~0"
   },
   "root": "~",
   "labeled": [],
-  "known": {
-    "WS": {
-      "trie": {
-        " ": {
-          "_v": -1
-        },
-        "\t": "~known~WS~trie~ ",
-        "\r": "~known~WS~trie~ ",
-        "\n": "~known~WS~trie~ ",
-        "\f": "~known~WS~trie~ "
-      },
-      "root": "~",
-      "labeled": []
-    },
-    "PM": {
-      "trie": {
-        "+": {
-          "_v": -1
-        },
-        "-": {
-          "_v": -1
-        }
-      },
-      "root": "~",
-      "labeled": []
-    },
-    "MD": {
-      "trie": {
-        "*": {
-          "_v": -1
-        },
-        "/": {
-          "_v": -1
-        }
-      },
-      "root": "~",
-      "labeled": []
-    },
-    "Variable": "~trie~_g~0~group~trie~_g~0~group",
-    "Expression": "~trie~_g~0~group",
-    "Additive": {
-      "trie": {
-        "_g": [
-          {
-            "group": "Expression",
-            "target": "left",
-            "next": {
-              "_g": [
-                {
-                  "group": "WS",
-                  "next": {
-                    "_g": [
-                      "~known~Additive~trie~_g~0~next~_g~0",
-                      {
-                        "group": "PM",
-                        "target": "operator",
-                        "next": {
-                          "_g": [
-                            {
-                              "group": "WS",
-                              "next": {
-                                "_g": [
-                                  "~known~Additive~trie~_g~0~next~_g~0~next~_g~1~next~_g~0",
-                                  {
-                                    "group": "Expression",
-                                    "target": "right",
-                                    "next": {
-                                      "_v": -1
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            "~known~Additive~trie~_g~0~next~_g~0~next~_g~1~next~_g~0~next~_g~1"
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                "~known~Additive~trie~_g~0~next~_g~0~next~_g~1"
-              ]
-            }
-          }
-        ]
-      },
-      "root": "~",
-      "labeled": [
-        "Expression",
-        "PM",
-        "Expression"
-      ]
-    },
-    "Multiplicative": {
-      "trie": {
-        "_g": [
-          {
-            "group": "Expression",
-            "target": "left",
-            "next": {
-              "_g": [
-                {
-                  "group": "WS",
-                  "next": {
-                    "_g": [
-                      "~known~Multiplicative~trie~_g~0~next~_g~0",
-                      {
-                        "group": "PM",
-                        "target": "operator",
-                        "next": {
-                          "_g": [
-                            {
-                              "group": "WS",
-                              "next": {
-                                "_g": [
-                                  "~known~Multiplicative~trie~_g~0~next~_g~0~next~_g~1~next~_g~0",
-                                  {
-                                    "group": "Expression",
-                                    "target": "right",
-                                    "next": {
-                                      "_v": -1
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            "~known~Multiplicative~trie~_g~0~next~_g~0~next~_g~1~next~_g~0~next~_g~1"
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                "~known~Multiplicative~trie~_g~0~next~_g~0~next~_g~1"
-              ]
-            }
-          }
-        ]
-      },
-      "root": "~",
-      "labeled": [
-        "Expression",
-        "PM",
-        "Expression"
-      ]
-    }
-  }
+  "known": {}
 }
