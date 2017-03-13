@@ -62,7 +62,6 @@ test('Trie a[0-9]*z works', t => {
 test('Trie [0-9]+(.[0-9]+)? works', t => {
   const trie = new Trie()
   trie.insert(r`[0-9]+(.[0-9]+)?`, 1)
-  console.log(str(trie))
   t.deepEqual(trie.match("21.91"), {value: 1, match: "21.91"})
   t.deepEqual(trie.match("21"), {value: 1, match: "21"})
   t.deepEqual(trie.match("21."), {value: 1, match: "21"})
@@ -72,6 +71,7 @@ test.skip('Trie named groups work', t => {
   const trie = new Trie()
   trie.define("FLOAT", r`[0-9]+(.[0-9]+)`)
   trie.insert("a{FLOAT}?", 1)
+  console.log(str(trie))
   t.deepEqual(trie.match("a4.2"), {value: 1, match: "a4.2"})
   t.deepEqual(trie.match("a"), {value: 1, match: "a"})
 })

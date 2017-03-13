@@ -24,20 +24,11 @@ const r = String.raw
  */
 
 
-export class Trie {
-  constructor(root = null) {
+class _Trie {
+  constructor(root = this) {
     this.trie = {}
     this.root = root
     this.labeled = []
-    if (root === null) { // not instanceOf Group
-      this.root = this
-      this.known = {}
-    }
-  }
-
-  _type() {
-    // return (this instanceof Group) ? "group" : "trie"
-    return (this === this.root) ? "trie" : "group"
   }
 
   _parse_ranges(str, next) {
@@ -60,22 +51,128 @@ export class Trie {
   }
 
   _parse_group(str, next, repeatable) {
-    let group = new Group(this.root)
-    let value_nodes = group.insert(str, VALUE_PLACEHOLDER)
-    return {group, value_nodes, next, repeatable}
+    let group = new Group(this.root, str)
+    return {group, next, repeatable}
   }
 
-  _parse_named_group(str, next) {
+  _parse_named_group(str, next, repeatable) {
     let group, target, known = this.root.known, s = str.split(":")
     if (s.length === 1) {
-      group = s[0] // only strings for now, could be circular definition, replaced ad-hoc in match()
-      return {group, next}
+      group = s[0] // only strings for now, as it could be a circular definition
+      return {group, next, repeatable}
     } else {
       group = s[1]
       target = s[0]
       this.labeled.push(group)
-      return {group, target, next}
+      return {group, target, next, repeatable}
     }
+  }
+
+  _insert(key, value) {
+    let k, quantifier, optional, repeatable
+    let current = this.trie, value_nodes = new Set(), group_nodes = new Set()
+    for (let i = 0, len = key.length; i < len; i++) {
+      k = key[i]
+      quantifier = null
+      optional = false
+      repeatable = false
+      // if an unescaped ( is found, handle it as a group until )
+      if (brackets.has(key[i]) && key[i - 1] !== "\\") { // \( or \{ or \[
+        let s = key.substr(i), group_info, obj, next = {}
+        let c = (k === "(") ? s.search(/[^\\]\)/) : (k === "{") ? s.search(/[^\\]\}/) : s.search(/[^\\]\]/)
+        if (c === -1) throw new Error(`UnclosedBracketInRegularExpression: ${s}`)
+        let p = s.substr(1, c), q = s[c + 2], qb = s[c + 1]
+        if (quantifiers.has(q) && qb !== "\\") {
+          quantifier = q
+          optional = (quantifier !== "+")
+          repeatable = (quantifier !== "?")
+          i++
+        }
+        if (k === "[") {
+          obj = this._parse_ranges(p, next)
+          Object.assign(current, obj)
+          if (repeatable) Object.assign(next, obj)
+          value_nodes.forEach(node => Object.assign(node, obj))
+        } else {
+          if (k === "(") group_info = this._parse_group(p, next, repeatable)
+          else group_info = this._parse_named_group(p, next, key, repeatable)
+          if (GROUP_KEY in current) current[GROUP_KEY].add(group_info)
+          else current[GROUP_KEY] = new Set([group_info])
+          group_nodes.add(current)
+          value_nodes.forEach(node => {
+            let tmp = node[GROUP_KEY]
+            if (tmp === undefined) {
+              node[GROUP_KEY] = new Set([group_info])
+              group_nodes.add(node)
+            } else if (tmp !== current) {
+              tmp.add(group_info)
+            }
+          })
+        }
+        current = next
+        if (!optional) value_nodes.clear()
+        value_nodes.add(current)
+        i += ++c
+      } else {
+        // handle backslashes
+        if (k === ESCAPED_BACKSLASH_REPLACEMENT) { // double-backslash was replaced above
+          k = "\\"
+        } else if (k === "\\") {  // only allow escaping where it makes sense
+          if (escapable.has(key[i + 1])) k = key[++i]
+          else throw new Error(`UnnecessaryEscapeInRegularExpression: ${key.substr(i)}`)
+        }
+        // if an unescaped | is found, leave the rest of the key to a subsequent insert()-call
+        else if (k === "|" && key[i - 1] !== "\\") {
+          if (i === 0) throw new Error(`TautologyInRegularExpression: ${key}`)
+          if (key[i - 1] !== "\\") { // \|
+            this._insert(key.substr(i + 1), value)
+            break
+          }
+        }
+        // detect unescaped quantifiers, e.g. inf+i?n?i?ty
+        else if (quantifiers.has(key[i + 1])) { // *+?
+          quantifier = key[i + 1]
+          optional = (quantifier !== "+")
+          repeatable = (quantifier !== "?")
+        }
+        // advance previous and current
+        current = current[k] || (current[k] = {})
+        value_nodes.forEach(node => {
+          let tmp = node[k]
+          if (tmp === undefined) node[k] = current
+          else if (tmp !== current) Object.assign(tmp, current)
+        })
+        // handle quantifiers
+        if (!optional) value_nodes.clear()
+        value_nodes.add(current)
+        if (repeatable) current[k] = current
+        if (quantifier !== null) i++
+      }
+    }
+    // assign value to nodes that should cause a match
+    if (!optional) value_nodes.clear()
+    value_nodes.add(current)
+    // merge group-nodes with the trie
+    for (let node of group_nodes) {
+      for (let {group, next, repeatable} of node[GROUP_KEY]) {
+        if (typeof group === "string") group = this.root.known[group]
+        Object.assign(node, group.trie)
+        if (repeatable) Object.assign(next, group.trie)
+        group.value_nodes.forEach(vn => {
+          if (next === current) vn[VALUE_KEY] = value
+          else Object.assign(vn, next)
+        })
+      }
+      delete node[GROUP_KEY]
+    }
+    return value_nodes
+  }
+}
+
+export class Trie extends _Trie {
+  constructor() {
+    super()
+    this.known = {}
   }
 
   /**
@@ -90,7 +187,7 @@ export class Trie {
    * @returns {Group[]}
    */
   define(identifier, pattern) {
-    let group = new Group(pattern, this)
+    let group = new Group(this, pattern)
     this.known[identifier] = group
     return group.labeled
   }
@@ -156,109 +253,10 @@ export class Trie {
    * @param {*} value
    */
   insert(key, value) {
-    let k, quantifier, optional, repeatable
-    let current = this.trie, value_nodes = new Set(), group_nodes = new Set()
-    if (this === this.root) key = key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT)
-    for (let i = 0, len = key.length; i < len; i++) {
-      k = key[i]
-      quantifier = null
-      optional = false
-      repeatable = false
-      // if an unescaped ( is found, handle it as a group until )
-      if (brackets.has(key[i]) && key[i - 1] !== "\\") { // \( or \{ or \[
-        let s = key.substr(i), group_info, obj, next = {}
-        let c = (k === "(") ? s.search(/[^\\]\)/) : (k === "{") ? s.search(/[^\\]\}/) : s.search(/[^\\]\]/)
-        if (c === -1) throw new Error(`UnclosedBracketInRegularExpression: ${s}`)
-        let p = s.substr(1, c), q = s[c + 2], qb = s[c + 1]
-        if (quantifiers.has(q) && qb !== "\\") {
-          quantifier = q
-          optional = (quantifier !== "+")
-          repeatable = (quantifier !== "?")
-          i++
-        }
-        if (k === "[") {
-          obj = this._parse_ranges(p, next)
-          Object.assign(current, obj)
-          if (repeatable) Object.assign(next, obj)
-          value_nodes.forEach(node => Object.assign(node, obj))
-        } else {
-          if (k === "(") group_info = this._parse_group(p, next, repeatable)
-          else group_info = this._parse_named_group(p, next, key)
-          if (GROUP_KEY in current) current[GROUP_KEY].add(group_info)
-          else current[GROUP_KEY] = new Set([group_info])
-          group_nodes.add(current)
-          value_nodes.forEach(node => {
-            let tmp = node[GROUP_KEY]
-            if (tmp === undefined) {
-              node[GROUP_KEY] = new Set([group_info])
-              group_nodes.add(node)
-            } else if (tmp !== current) {
-              tmp.add(group_info)
-            }
-          })
-        }
-        current = next
-        if (!optional) value_nodes.clear()
-        value_nodes.add(current)
-        i += ++c
-      } else {
-        // handle backslashes
-        if (k === ESCAPED_BACKSLASH_REPLACEMENT) { // double-backslash was replaced above
-          k = "\\"
-        } else if (k === "\\") {  // only allow escaping where it makes sense
-          if (escapable.has(key[i + 1])) k = key[++i]
-          else throw new Error(`UnnecessaryEscapeInRegularExpression: ${key.substr(i)}`)
-        }
-        // if an unescaped | is found, leave the rest of the key to a subsequent insert()-call
-        else if (k === "|" && key[i - 1] !== "\\") {
-          if (i === 0) throw new Error(`TautologyInRegularExpression: ${key}`)
-          if (key[i - 1] !== "\\") { // \|
-            this.insert(key.substr(i + 1), value)
-            break
-          }
-        }
-        // detect unescaped quantifiers, e.g. inf+i?n?i?ty
-        else if (quantifiers.has(key[i + 1])) { // *+?
-          quantifier = key[i + 1]
-          optional = (quantifier !== "+")
-          repeatable = (quantifier !== "?")
-        }
-        // advance previous and current
-        current = current[k] || (current[k] = {})
-        value_nodes.forEach(node => {
-          let tmp = node[k]
-          if (tmp === undefined) node[k] = current
-          else if (tmp !== current) Object.assign(tmp, current)
-        })
-        // handle quantifiers
-        if (!optional) value_nodes.clear()
-        value_nodes.add(current)
-        if (repeatable) current[k] = current
-        if (quantifier !== null) i++
-      }
-    }
-    // assign value to nodes that should cause a match
-    if (!optional) value_nodes.clear()
-    value_nodes.add(current)
-    if (this.root === this) {
-      value_nodes.forEach(node => {
-        if (!(VALUE_KEY in node)) node[VALUE_KEY] = value
-      })
-    }
-    // merge group-nodes with the trie
-    for (let node of group_nodes) {
-      for (let {group, value_nodes, next, repeatable} of node[GROUP_KEY]) {
-        if (typeof group === "string") group = this.root.known[group]
-        Object.assign(node, group.trie)
-        if (repeatable) Object.assign(next, group.trie)
-        value_nodes.forEach(vn => {
-          if (next === current) vn[VALUE_KEY] = value
-          else Object.assign(vn, next)
-        })
-      }
-      delete node[GROUP_KEY]
-    }
-    return value_nodes
+    let value_nodes = this._insert(key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT), value)
+    value_nodes.forEach(node => {
+      if (!(VALUE_KEY in node)) node[VALUE_KEY] = value
+    })
   }
 
   /**
@@ -286,7 +284,12 @@ export class Trie {
   }
 }
 
-class Group extends Trie {
+class Group extends _Trie {
+  constructor(root, pattern) {
+    super(root)
+    this.value_nodes = this._insert(pattern, VALUE_PLACEHOLDER)
+  }
+
   setupOperator(bp = 0, nud = null, led = null, expect_left = null, expect_right = null) {
     if (bp > this.bp) this.bp = bp
     if (nud !== null) {
