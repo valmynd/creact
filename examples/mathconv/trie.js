@@ -6,6 +6,8 @@ const escapable = new Set(["(", "{", "[", "|"])
 const brackets = new Set(["(", "{", "["])
 const r = String.raw
 
+import CircularJSON from "circular-json"
+
 /**
  * idea for operator precedence:
  * - we have arrays for the keyword _g at various positions in the trie
@@ -232,13 +234,14 @@ export class Trie extends _Trie {
     // merge group-nodes with the trie
     for (let node of group_nodes) {
       for (let {group, next, repeatable} of node[GROUP_KEY]) {
-        if (typeof group === "string") group = this.known[group]
+        if (typeof group === "string") group = CircularJSON.parse(CircularJSON.stringify(this.known[group]))
         Object.assign(node, group.trie)
         if (repeatable) Object.assign(next, group.trie)
         group.value_nodes.forEach(vn => {
           Object.assign(vn, next)
         })
         this._merge_groups(group.group_nodes)
+
       }
       delete node[GROUP_KEY]
     }

@@ -73,38 +73,75 @@
   "known": {
     "FLOAT": {
       "trie": {
-        "0": "~trie~a~0",
-        "1": "~trie~a~0",
-        "2": "~trie~a~0",
-        "3": "~trie~a~0",
-        "4": "~trie~a~0",
-        "5": "~trie~a~0",
-        "6": "~trie~a~0",
-        "7": "~trie~a~0",
-        "8": "~trie~a~0",
-        "9": "~trie~a~0"
+        "0": {
+          "0": "~known~FLOAT~trie~0",
+          "1": "~known~FLOAT~trie~0",
+          "2": "~known~FLOAT~trie~0",
+          "3": "~known~FLOAT~trie~0",
+          "4": "~known~FLOAT~trie~0",
+          "5": "~known~FLOAT~trie~0",
+          "6": "~known~FLOAT~trie~0",
+          "7": "~known~FLOAT~trie~0",
+          "8": "~known~FLOAT~trie~0",
+          "9": "~known~FLOAT~trie~0",
+          "_g": [
+            {
+              "group": {
+                "trie": {
+                  ".": {
+                    "0": {
+                      "0": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                      "1": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                      "2": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                      "3": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                      "4": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                      "5": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                      "6": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                      "7": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                      "8": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                      "9": "~known~FLOAT~trie~0~_g~0~group~trie~.~0"
+                    },
+                    "1": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                    "2": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                    "3": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                    "4": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                    "5": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                    "6": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                    "7": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                    "8": "~known~FLOAT~trie~0~_g~0~group~trie~.~0",
+                    "9": "~known~FLOAT~trie~0~_g~0~group~trie~.~0"
+                  }
+                },
+                "root": "~",
+                "value_nodes": [
+                  "~known~FLOAT~trie~0~_g~0~group~trie~.~0"
+                ],
+                "group_nodes": [],
+                "labeled": []
+              },
+              "next": {},
+              "repeatable": false
+            }
+          ]
+        },
+        "1": "~known~FLOAT~trie~0",
+        "2": "~known~FLOAT~trie~0",
+        "3": "~known~FLOAT~trie~0",
+        "4": "~known~FLOAT~trie~0",
+        "5": "~known~FLOAT~trie~0",
+        "6": "~known~FLOAT~trie~0",
+        "7": "~known~FLOAT~trie~0",
+        "8": "~known~FLOAT~trie~0",
+        "9": "~known~FLOAT~trie~0"
       },
       "root": "~",
       "value_nodes": [
-        {
-          "0": "~trie~a~0",
-          "1": "~trie~a~0",
-          "2": "~trie~a~0",
-          "3": "~trie~a~0",
-          "4": "~trie~a~0",
-          "5": "~trie~a~0",
-          "6": "~trie~a~0",
-          "7": "~trie~a~0",
-          "8": "~trie~a~0",
-          "9": "~trie~a~0",
-          "_v": 1
-        }
+        "~known~FLOAT~trie~0~_g~0~next"
       ],
       "group_nodes": [
-        "~trie~a~0"
+        "~known~FLOAT~trie~0"
       ],
       "labeled": []
     }
   }
 }
-
