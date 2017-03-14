@@ -67,7 +67,7 @@ test('Trie [0-9]+(.[0-9]+)? works', t => {
   t.deepEqual(trie.match("21."), {value: 1, match: "21"})
 })
 
-test.skip('Trie named groups work', t => {
+test('Trie named groups work', t => {
   const trie = new Trie()
   trie.define("FLOAT", r`[0-9]+(.[0-9]+)`)
   trie.insert("a{FLOAT}?", 1)

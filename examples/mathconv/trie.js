@@ -1,6 +1,5 @@
 const VALUE_KEY = "_v"
 const GROUP_KEY = "_g" // there could be multiple groups at one point in the trie
-const VALUE_PLACEHOLDER = -1
 const ESCAPED_BACKSLASH_REPLACEMENT = "\u0003"
 const quantifiers = new Set(["*", "+", "?"])
 const escapable = new Set(["(", "{", "[", "|"])
@@ -28,6 +27,8 @@ class _Trie {
   constructor(root = this) {
     this.trie = {}
     this.root = root
+    this.value_nodes = new Set()
+    this.group_nodes = new Set()
     this.labeled = []
   }
 
@@ -56,7 +57,7 @@ class _Trie {
   }
 
   _parse_named_group(str, next, repeatable) {
-    let group, target, known = this.root.known, s = str.split(":")
+    let group, target, s = str.split(":")
     if (s.length === 1) {
       group = s[0] // only strings for now, as it could be a circular definition
       return {group, next, repeatable}
@@ -68,9 +69,9 @@ class _Trie {
     }
   }
 
-  _insert(key, value) {
-    let k, quantifier, optional, repeatable
-    let current = this.trie, value_nodes = new Set(), group_nodes = new Set()
+  _insert(key) {
+    let k, quantifier, optional, repeatable, current = this.trie
+    let value_nodes = this.value_nodes, group_nodes = this.group_nodes
     for (let i = 0, len = key.length; i < len; i++) {
       k = key[i]
       quantifier = null
@@ -125,7 +126,7 @@ class _Trie {
         else if (k === "|" && key[i - 1] !== "\\") {
           if (i === 0) throw new Error(`TautologyInRegularExpression: ${key}`)
           if (key[i - 1] !== "\\") { // \|
-            this._insert(key.substr(i + 1), value)
+            this._insert(key.substr(i + 1))
             break
           }
         }
@@ -149,23 +150,6 @@ class _Trie {
         if (quantifier !== null) i++
       }
     }
-    // assign value to nodes that should cause a match
-    if (!optional) value_nodes.clear()
-    value_nodes.add(current)
-    // merge group-nodes with the trie
-    for (let node of group_nodes) {
-      for (let {group, next, repeatable} of node[GROUP_KEY]) {
-        if (typeof group === "string") group = this.root.known[group]
-        Object.assign(node, group.trie)
-        if (repeatable) Object.assign(next, group.trie)
-        group.value_nodes.forEach(vn => {
-          if (next === current) vn[VALUE_KEY] = value
-          else Object.assign(vn, next)
-        })
-      }
-      delete node[GROUP_KEY]
-    }
-    return value_nodes
   }
 }
 
@@ -244,6 +228,22 @@ export class Trie extends _Trie {
     //op.priority = priority
   }
 
+  _merge_groups(group_nodes) {
+    // merge group-nodes with the trie
+    for (let node of group_nodes) {
+      for (let {group, next, repeatable} of node[GROUP_KEY]) {
+        if (typeof group === "string") group = this.known[group]
+        Object.assign(node, group.trie)
+        if (repeatable) Object.assign(next, group.trie)
+        group.value_nodes.forEach(vn => {
+          Object.assign(vn, next)
+        })
+        this._merge_groups(group.group_nodes)
+      }
+      delete node[GROUP_KEY]
+    }
+  }
+
   /**
    * Insert key-value-pair into the Trie
    * Keys can contain very(!) simple forms of regular expressions, e.g.
@@ -253,10 +253,12 @@ export class Trie extends _Trie {
    * @param {*} value
    */
   insert(key, value) {
-    let value_nodes = this._insert(key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT), value)
-    value_nodes.forEach(node => {
+    this._insert(key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT))
+    // assign value to nodes that should cause a match
+    for (let node of this.value_nodes) {
       if (!(VALUE_KEY in node)) node[VALUE_KEY] = value
-    })
+    }
+    this._merge_groups(this.group_nodes)
   }
 
   /**
@@ -287,7 +289,7 @@ export class Trie extends _Trie {
 class Group extends _Trie {
   constructor(root, pattern) {
     super(root)
-    this.value_nodes = this._insert(pattern, VALUE_PLACEHOLDER)
+    this._insert(pattern)
   }
 
   setupOperator(bp = 0, nud = null, led = null, expect_left = null, expect_right = null) {
