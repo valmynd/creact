@@ -1,37 +1,15 @@
 const VALUE_KEY = "_v"
-const GROUP_KEY = "_g" // there could be multiple groups at one point in the trie
+const PLACEHOLDER_KEY = "_p" // there could be multiple placeholders at one point in the trie
 const ESCAPED_BACKSLASH_REPLACEMENT = "\u0003"
 const quantifiers = new Set(["*", "+", "?"])
 const escapable = new Set(["(", "{", "[", "|"])
 const brackets = new Set(["(", "{", "["])
 const r = String.raw
 
-import CircularJSON from "circular-json"
-
-/**
- * idea for operator precedence:
- * - we have arrays for the keyword _g at various positions in the trie
- * - e.g. we may have a rule Expression: {Literal}|{Multiplication}|{Addition}{Subtraction}
- *    - Multiplication could be defined as {left:Expression}{WS}*{operator:OP}{WS}*{right:Expression}
- *    - we end up having something like known["Expression"] = {"_g": [...]}
- * - all we need to do is sort that array by the binding power of each!
- */
-
-/**
- * @typedef {Object} GroupInfo
- * @property {string|Group} group
- * @property {function} [nud] (handler of a token as prefix)
- * @property {function} [led] (handler of a token as infix)
- */
-
-
-class _Trie {
-  constructor(root = this) {
+export class Trie {
+  constructor() {
     this.trie = {}
-    this.root = root
-    this.value_nodes = new Set()
-    this.group_nodes = new Set()
-    this.labeled = []
+    this.known = {}
   }
 
   _parse_ranges(str, next) {
@@ -53,27 +31,22 @@ class _Trie {
     return obj
   }
 
-  _parse_group(str, next, repeatable) {
-    let group = new Group(this.root, str)
-    return {group, next, repeatable}
-  }
-
   _parse_named_group(str, next, repeatable) {
-    let group, target, s = str.split(":")
+    let identifier, target, s = str.split(":")
     if (s.length === 1) {
-      group = s[0] // only strings for now, as it could be a circular definition
-      return {group, next, repeatable}
+      identifier = s[0] // only strings for now, as it could be a circular definition
+      return {identifier, next, repeatable}
     } else {
-      group = s[1]
+      identifier = s[1]
       target = s[0]
-      this.labeled.push(group)
-      return {group, target, next, repeatable}
+      return {identifier, target, next, repeatable}
     }
   }
 
-  _insert(key) {
+  _insert(key, next) {
+    console.log("_insert", key, next)
     let k, quantifier, optional, repeatable, current = this.trie
-    let value_nodes = this.value_nodes, group_nodes = this.group_nodes
+    let value_nodes = [], placeholder_nodes = []
     for (let i = 0, len = key.length; i < len; i++) {
       k = key[i]
       quantifier = null
@@ -81,10 +54,10 @@ class _Trie {
       repeatable = false
       // if an unescaped ( is found, handle it as a group until )
       if (brackets.has(key[i]) && key[i - 1] !== "\\") { // \( or \{ or \[
-        let s = key.substr(i), group_info, obj, next = {}
+        let s = key.substr(i), placeholder, obj, next = {}
         let c = (k === "(") ? s.search(/[^\\]\)/) : (k === "{") ? s.search(/[^\\]\}/) : s.search(/[^\\]\]/)
         if (c === -1) throw new Error(`UnclosedBracketInRegularExpression: ${s}`)
-        let p = s.substr(1, c), q = s[c + 2], qb = s[c + 1]
+        let pattern = s.substr(1, c), q = s[c + 2], qb = s[c + 1]
         if (quantifiers.has(q) && qb !== "\\") {
           quantifier = q
           optional = (quantifier !== "+")
@@ -92,29 +65,32 @@ class _Trie {
           i++
         }
         if (k === "[") {
-          obj = this._parse_ranges(p, next)
+          obj = this._parse_ranges(pattern, next)
           Object.assign(current, obj)
           if (repeatable) Object.assign(next, obj)
           value_nodes.forEach(node => Object.assign(node, obj))
         } else {
-          if (k === "(") group_info = this._parse_group(p, next, repeatable)
-          else group_info = this._parse_named_group(p, next, key, repeatable)
-          if (GROUP_KEY in current) current[GROUP_KEY].add(group_info)
-          else current[GROUP_KEY] = new Set([group_info])
-          group_nodes.add(current)
+          if (k === "(") placeholder = {pattern, next, repeatable}
+          else placeholder = this._parse_named_group(pattern, next, key, repeatable)
+          if (PLACEHOLDER_KEY in current) {
+            current[PLACEHOLDER_KEY].push(placeholder)
+          } else {
+            current[PLACEHOLDER_KEY] = [placeholder]
+            placeholder_nodes.push(current)
+          }
           value_nodes.forEach(node => {
-            let tmp = node[GROUP_KEY]
+            let tmp = node[PLACEHOLDER_KEY]
             if (tmp === undefined) {
-              node[GROUP_KEY] = new Set([group_info])
-              group_nodes.add(node)
+              node[PLACEHOLDER_KEY] = [placeholder]
+              placeholder_nodes.push(node)
             } else if (tmp !== current) {
-              tmp.add(group_info)
+              tmp.push(placeholder)
             }
           })
         }
         current = next
-        if (!optional) value_nodes.clear()
-        value_nodes.add(current)
+        if (optional) value_nodes.push(current)
+        else value_nodes = [current]
         i += ++c
       } else {
         // handle backslashes
@@ -128,7 +104,7 @@ class _Trie {
         else if (k === "|" && key[i - 1] !== "\\") {
           if (i === 0) throw new Error(`TautologyInRegularExpression: ${key}`)
           if (key[i - 1] !== "\\") { // \|
-            this._insert(key.substr(i + 1))
+            this._insert(key.substr(i + 1), next)
             break
           }
         }
@@ -139,6 +115,7 @@ class _Trie {
           repeatable = (quantifier !== "?")
         }
         // advance previous and current
+        console.log({k}, current)
         current = current[k] || (current[k] = {})
         value_nodes.forEach(node => {
           let tmp = node[k]
@@ -146,104 +123,35 @@ class _Trie {
           else if (tmp !== current) Object.assign(tmp, current)
         })
         // handle quantifiers
-        if (!optional) value_nodes.clear()
-        value_nodes.add(current)
+        if (optional) value_nodes.push(current)
+        else value_nodes = [current]
         if (repeatable) current[k] = current
         if (quantifier !== null) i++
       }
     }
-  }
-}
-
-export class Trie extends _Trie {
-  constructor() {
-    super()
-    this.known = {}
-  }
-
-  /**
-   * Add a named Group
-   * Returns a list of labeled sub-groups
-   * @example
-   *  trie.define("FLOAT", r`[0-9]+(.[0-9]+)?`)
-   *  trie.insert("a{FLOAT}", 1)
-   *  trie.match("a4.2")
-   * @param {string} identifier
-   * @param {string} pattern
-   * @returns {Group[]}
-   */
-  define(identifier, pattern) {
-    let group = new Group(this, pattern)
-    this.known[identifier] = group
-    return group.labeled
-  }
-
-  /**
-   * define Binary Left-Associative Operator
-   * @param {int} priority
-   * @param {string} identifier
-   * @param {string} pattern
-   */
-  defineBinaryLeftAssociative(priority, identifier, pattern) {
-    let labeled_groups = this.define(identifier, pattern)
-    if (labeled_groups.length !== 3) throw new Error(`InvalidBinaryOperator: ${pattern}`)
-    let [left, op, right] = labeled_groups
-    //op.priority = priority
-  }
-
-  /**
-   * define Binary Right-Associative Operator
-   * @param {int} priority
-   * @param {string} identifier
-   * @param {string} pattern
-   */
-  defineBinaryRightAssociative(priority, identifier, pattern) {
-    let labeled_groups = this.define(identifier, pattern)
-    if (labeled_groups.length !== 3) throw new Error(`InvalidBinaryOperator: ${pattern}`)
-    let [left, op, right] = labeled_groups
-    //op.priority = priority
-  }
-
-  /**
-   * define Unary Prefix Operator
-   * @param {int} priority
-   * @param {string} identifier
-   * @param {string} pattern
-   */
-  defineUnaryPrefix(priority, identifier, pattern) {
-    let labeled_groups = this.define(identifier, pattern)
-    if (labeled_groups.length !== 2) throw new Error(`InvalidUnaryOperator: ${pattern}`)
-    let [op, right] = labeled_groups
-    //op.priority = priority
-  }
-
-  /**
-   * define Unary Postfix Operator
-   * @param {int} priority
-   * @param {string} identifier
-   * @param {string} pattern
-   */
-  defineUnaryPostfix(priority, identifier, pattern) {
-    let labeled_groups = this.define(identifier, pattern)
-    if (labeled_groups.length !== 2) throw new Error(`InvalidUnaryOperator: ${pattern}`)
-    let [left, op] = labeled_groups
-    //op.priority = priority
-  }
-
-  _merge_groups(group_nodes) {
-    // merge group-nodes with the trie
-    for (let node of group_nodes) {
-      for (let {group, next, repeatable} of node[GROUP_KEY]) {
-        if (typeof group === "string") group = CircularJSON.parse(CircularJSON.stringify(this.known[group]))
-        Object.assign(node, group.trie)
-        if (repeatable) Object.assign(next, group.trie)
-        group.value_nodes.forEach(vn => {
-          Object.assign(vn, next)
-        })
-        this._merge_groups(group.group_nodes)
-
+    console.log({placeholder_nodes, value_nodes})
+    // assign value to nodes that should cause a match
+    for (let node of value_nodes) {
+      console.log({node})
+      Object.assign(node, next) // first come, LAST served now (!)
+    }
+    // resolve placeholders
+    let parsed_placeholders = new Map()
+    for (let node of placeholder_nodes) {
+      for (let placeholder of new Set(node[PLACEHOLDER_KEY])) {
+        let parsed = parsed_placeholders.get(placeholder)
+        if(parsed === undefined) {
+          let sub_trie = new Trie()
+          sub_trie.known = this.known
+          if(placeholder.pattern !== undefined) {
+            sub_trie._insert(placeholder.pattern, next)
+          }
+          parsed = sub_trie.trie
+          parsed_placeholders.set(placeholder, parsed)
+        }
+        Object.assign(node, parsed)
       }
-      delete node[GROUP_KEY]
+      delete node[PLACEHOLDER_KEY]
     }
   }
 
@@ -256,12 +164,7 @@ export class Trie extends _Trie {
    * @param {*} value
    */
   insert(key, value) {
-    this._insert(key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT))
-    // assign value to nodes that should cause a match
-    for (let node of this.value_nodes) {
-      if (!(VALUE_KEY in node)) node[VALUE_KEY] = value
-    }
-    this._merge_groups(this.group_nodes)
+    this._insert(key.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT), {[VALUE_KEY]: value})
   }
 
   /**
@@ -286,24 +189,5 @@ export class Trie extends _Trie {
     }
     if (last_value === null) return null
     return {match: str.substr(0, last_value_i + 1), value: last_value}
-  }
-}
-
-class Group extends _Trie {
-  constructor(root, pattern) {
-    super(root)
-    this._insert(pattern)
-  }
-
-  setupOperator(bp = 0, nud = null, led = null, expect_left = null, expect_right = null) {
-    if (bp > this.bp) this.bp = bp
-    if (nud !== null) {
-      if (this.nud === null) this.nud = nud
-      else throw "AlreadyDefinedNud"
-    }
-    if (led !== null) {
-      if (this.led === null) this.led = led
-      else throw "AlreadyDefinedLed"
-    }
   }
 }
