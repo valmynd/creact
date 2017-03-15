@@ -6,35 +6,30 @@
       "c": "~trie~a",
       "d": "~trie~a",
       "e": "~trie~a",
-      "+": {
+      "_v": 1,
+      ",": {
         "a": {
-          "a": "~trie~a~+~a",
-          "b": "~trie~a~+~a",
-          "c": "~trie~a~+~a",
-          "d": "~trie~a~+~a",
-          "e": "~trie~a~+~a",
+          "a": "~trie~a~,~a",
+          "b": "~trie~a~,~a",
+          "c": "~trie~a~,~a",
+          "d": "~trie~a~,~a",
+          "e": "~trie~a~,~a",
           "_v": 1,
+          ",": "~trie~a~,",
           "_t": [
-            "right"
+            "word"
           ]
         },
-        "b": "~trie~a~+~a",
-        "c": "~trie~a~+~a",
-        "d": "~trie~a~+~a",
-        "e": "~trie~a~+~a",
+        "b": "~trie~a~,~a",
+        "c": "~trie~a~,~a",
+        "d": "~trie~a~,~a",
+        "e": "~trie~a~,~a",
         "_c": [
-          "right"
-        ],
-        "_t": [
-          "operator"
+          "word"
         ]
       },
-      "-": "~trie~a~+",
-      "_c": [
-        "operator"
-      ],
       "_t": [
-        "left"
+        "word"
       ]
     },
     "b": "~trie~a",
@@ -42,12 +37,10 @@
     "d": "~trie~a",
     "e": "~trie~a",
     "_c": [
-      "left"
+      "word"
     ]
   },
   "known": {
-    "WS": "[ \t\r\n\f]",
-    "OP": "[+\\-]",
     "VAR": "[a-e]+"
   }
 }

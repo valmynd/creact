@@ -8,7 +8,7 @@ const r = String.raw
 import a from "../dist/mathconv/asciimath"
 //console.log("asciimath:", str(a))
 
-test.skip('Trie inf+i?n?i?t?y works', t => {
+test('Trie inf+i?n?i?t?y works', t => {
   const trie = new Trie()
   trie.insert("inf+i?n?i?t?y", 1)
   t.deepEqual(trie.match("infinity"), {value: 1, match: "infinity"})
@@ -21,13 +21,13 @@ test.skip('Trie inf+i?n?i?t?y works', t => {
   t.deepEqual(trie.match("infinity"), {value: 2, match: "infinity"}) // FILO
 })
 
-test.skip('Trie hel(lo) works', t => { // hel(la|(lo)+)?
+test('Trie hel(lo) works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)`, 1)
   t.deepEqual(trie.match("hello"), {value: 1, match: "hello"})
 })
 
-test.skip('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
+test('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)?ya`, 1)
   t.deepEqual(trie.match("helya"), {value: 1, match: "helya"})
@@ -35,7 +35,7 @@ test.skip('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
   t.true(trie.match("hellya") === null)
 })
 
-test.skip('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
+test('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)+ya`, 1)
   t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
@@ -44,7 +44,7 @@ test.skip('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
   t.true(trie.match("helloolya") === null) // caused endless loop before
 })
 
-test.skip('Trie a[0-9]*z works', t => {
+test('Trie a[0-9]*z works', t => {
   let trie = new Trie()
   trie.insert(r`a[0-9]*z`, 1)
   t.deepEqual(trie.match("a2017z"), {value: 1, match: "a2017z"})
@@ -57,7 +57,7 @@ test.skip('Trie a[0-9]*z works', t => {
   t.deepEqual(trie.match("a90000"), {value: 1, match: "a90000"})
 })
 
-test.skip('Trie [0-9]+(.[0-9]+)? works', t => {
+test('Trie [0-9]+(.[0-9]+)? works', t => {
   const trie = new Trie()
   trie.insert(r`[0-9]+(.[0-9]+)?`, 1)
   t.deepEqual(trie.match("21.91"), {value: 1, match: "21.91"})
@@ -65,7 +65,7 @@ test.skip('Trie [0-9]+(.[0-9]+)? works', t => {
   t.deepEqual(trie.match("21."), {value: 1, match: "21"})
 })
 
-test.skip('Trie named groups work', t => {
+test('Trie named groups work', t => {
   const trie = new Trie()
   trie.define("FLOAT", r`[0-9]+(.[0-9]+)?`)
   trie.insert("a{FLOAT}?", 1)
@@ -74,7 +74,7 @@ test.skip('Trie named groups work', t => {
   t.deepEqual(trie.match("a"), {value: 1, match: "a"})
 })
 
-test.skip('Trie backslash handling works', t => {
+test('Trie backslash handling works', t => {
   let trie = new Trie()
   trie.insert(r`a\{FLOAT}?`, 1)
   t.deepEqual(trie.match("a{FLOAT"), {value: 1, match: "a{FLOAT"})
@@ -85,7 +85,7 @@ test.skip('Trie backslash handling works', t => {
   t.deepEqual(trie.match("a\\"), {value: 1, match: "a\\"})
 })
 
-test.skip('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
+test('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
   let trie = new Trie()
   trie.define("WS", "[ \t\r\n\f]")
   trie.define("GREEK_LETTER", Object.keys(a.TOKENS.GREEK_LETTER).join("|"))
@@ -98,16 +98,21 @@ test.skip('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
   t.true(trie.match("a") === null)
   trie.insert("[a-c][0-2]?[d-f]?[3-5]?[g-h]?", 2)
   t.deepEqual(trie.match("a"), {value: 2, match: "a"})
-  t.deepEqual(trie.match("ag"), {value: 2, match:"ag"})
+  t.deepEqual(trie.match("ag"), {value: 2, match: "ag"})
 })
 
-test('Trie capture-groups work', t => {
+test('Trie capture-groups work (1)', t => {
   let trie = new Trie()
   trie.define("WS", "[ \t\r\n\f]")
   trie.define("OP", r`[+\-]`)
   trie.define("VAR", "[a-e]+")
   trie.insert("{left:VAR}{operator:OP}{right:VAR}", 1)
-  console.log(str(trie))
-  console.log(trie.match("aa+ab"))
-  t.deepEqual(trie.match("a+a"), {value: 1, match: "a+a"})
+  t.deepEqual(trie.match("aa+ab"), {left: "aa", operator: "+", right: "ab"})
+})
+
+test('Trie capture-groups work (2)', t => {
+  let trie = new Trie()
+  trie.define("VAR", "[a-e]+")
+  trie.insert("{word:VAR}(,{word:VAR})*", 1)
+  t.deepEqual(trie.match("a,b,ab"), {"word": ["a", "b", "ab"]})
 })

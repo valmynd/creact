@@ -79,7 +79,6 @@ export class Trie {
           placeholders.push({pattern, target, next, repeatable, nodes})
         }
         current = next
-        console.log({optional, repeatable}, k)
         if (optional) value_nodes.push(current)
         else value_nodes = [current]
         i += ++c
@@ -180,20 +179,38 @@ export class Trie {
    * @returns {{match: string, value: *}|null}
    */
   match(str) {
-    let n, v, c, t, i = 0, current = this.trie, last_capture = [null, 0], capturing = {}, result = {}
+    let n, v, c, t, i = 0, current = this.trie
+    let capturing = {}, result = {}
+    let last_capture = [null, 0, null] // last_targeted, last_i, index within result[target-id], or null if no array
     let last_value = null, last_value_i = 0
     for (let len = str.length; i <= len; i++) {
       c = current[CAPTURE_KEY]
       t = current[TARGET_KEY]
       if (t !== undefined) {
         for (let targeted of t) {
-          let a = capturing[targeted]
-          if (last_capture[0] !== targeted) {
-            a = last_capture[1]
+          let a = capturing[targeted], res = result[targeted]
+          let [last_targeted, last_i, pos] = last_capture
+          if (last_targeted === targeted) {
+            if (pos !== null) res[pos] = str.substr(a, i - a)
+            else result[targeted] = str.substr(a, i - a)
+            last_capture = [targeted, i, pos]
+          } else {
+            if (last_targeted !== null) a = last_i
+            if (Array.isArray(res)) {
+              pos = res.length
+              res.push(str.substr(a, i - a))
+            } else if (res !== undefined) {
+              pos = 1
+              result[targeted] = [res, str.substr(a, i - a)]
+            } else {
+              result[targeted] = str.substr(a, i - a)
+            }
+            last_capture = [targeted, i, pos]
           }
-          result[targeted] = str.substr(a, i - a)
-          last_capture = [targeted, i]
         }
+      } else {
+        last_capture = [null, 0, null]
+        capturing = {}
       }
       if (c !== undefined) {
         for (let captured of c) {
@@ -215,7 +232,10 @@ export class Trie {
       current = n
     }
     if (last_value === null) return null
-    if (Object.keys(result).length > 0) console.log(result, capturing)
+    if (Object.keys(result).length > 0) {
+      console.log(result, capturing)
+      return result
+    }
     return {match: str.substr(0, last_value_i + 1), value: last_value}
   }
 }
