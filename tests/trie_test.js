@@ -18,8 +18,7 @@ test('Trie inf+i?n?i?t?y works', t => {
   t.true(trie.match("inf") === null)
   trie.insert("inf+i?n?i?t?y?", 2)
   t.deepEqual(trie.match("inf"), {value: 2, match: "inf"})
-  t.deepEqual(trie.match("infinity"), {value: 2, match: "infinity"}) // first come, LAST served now (?!)
-  //console.log((trie.trie["i"]["n"]["f"]))
+  t.deepEqual(trie.match("infinity"), {value: 2, match: "infinity"}) // FILO
 })
 
 test('Trie hel(lo) works', t => { // hel(la|(lo)+)?
@@ -39,7 +38,6 @@ test('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
 test('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)+ya`, 1)
-  console.log(str(trie))
   t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
   t.deepEqual(trie.match("helloloya"), {value: 1, match: "helloloya"})
   t.true(trie.match("hellollya") === null) // should NOT match
@@ -94,12 +92,21 @@ test('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
   trie.insert("{GREEK_LETTER}(+|-){GREEK_LETTER}", 1)
   t.deepEqual(trie.match("α+α"), {value: 1, match: "α+α"})
   t.deepEqual(trie.match("ζ+Π"), {value: 1, match: "ζ+Π"})
-  console.log(str(trie))
   trie = new Trie()
   trie.insert("[a-c][0-2]?[d-f]?[3-5]?[g-h]", 1)
   t.deepEqual(trie.match("ag"), {value: 1, match: "ag"})
   t.true(trie.match("a") === null)
   trie.insert("[a-c][0-2]?[d-f]?[3-5]?[g-h]?", 2)
   t.deepEqual(trie.match("a"), {value: 2, match: "a"})
-  //t.deepEqual(trie.match("ag"), {value: 1, match:"ag"}) ??
+  t.deepEqual(trie.match("ag"), {value: 2, match:"ag"})
+})
+
+test('Trie capture-groups work', t => {
+  let trie = new Trie()
+  trie.define("WS", "[ \t\r\n\f]")
+  trie.define("OP", r`[+\-]`)
+  trie.define("LETTER", "[a-e]")
+  trie.insert("{left:LETTER}{operator:OP}{right:LETTER}", 1)
+  console.log(str(trie))
+  t.deepEqual(trie.match("a+a"), {value: 1, match: "a+a"})
 })

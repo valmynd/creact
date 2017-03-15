@@ -1,6 +1,7 @@
 const VALUE_KEY = "_v"
-const PLACEHOLDER_KEY = "_p" // there could be multiple placeholders at one point in the trie
 const ESCAPED_BACKSLASH_REPLACEMENT = "\u0003"
+const ESCAPED_MINUS_REPLACEMENT = "\u0003"
+const ESCAPED_MINUS_REPLACEMENT_CC = ESCAPED_MINUS_REPLACEMENT.charCodeAt(0)
 const quantifiers = new Set(["*", "+", "?"])
 const escapable = new Set(["(", "{", "[", "|"])
 const brackets = new Set(["(", "{", "["])
@@ -21,12 +22,18 @@ export class Trie {
       if (str[i + 1] === "-") {
         from = str.charCodeAt(i++)
         to = str.charCodeAt(++i)
+        if (from === ESCAPED_MINUS_REPLACEMENT_CC) from = "-".charCodeAt(0)
+        if (to === ESCAPED_MINUS_REPLACEMENT_CC) to = "-".charCodeAt(0)
         if (from > to) throw new Error(`InvalidRange: ${String.fromCharCode(from)} > ${String.fromCharCode(to)}`)
         for (let c = from; c <= to; c++) {
           obj[String.fromCharCode(c)] = next
         }
       }
-      else obj[str[i]] = next
+      else if (str[i] === ESCAPED_MINUS_REPLACEMENT) {
+        obj["-"] = next
+      } else {
+        obj[str[i]] = next
+      }
     }
     return obj
   }
@@ -52,7 +59,7 @@ export class Trie {
           i++
         }
         if (k === "[") {
-          obj = this._parse_ranges(pattern, next)
+          obj = this._parse_ranges(pattern.replace(/\\-/, ESCAPED_MINUS_REPLACEMENT), next)
           Object.assign(current, obj)
           if (repeatable) Object.assign(next, obj)
           value_nodes.forEach(node => Object.assign(node, obj))
@@ -111,7 +118,7 @@ export class Trie {
     }
     // assign value to nodes that should cause a match
     for (let node of value_nodes) {
-      Object.assign(node, next) // first come, LAST served now (!)
+      Object.assign(node, next) // FILO
     }
     // resolve placeholders
     for (let {pattern, target, next, repeatable, nodes} of placeholders.reverse()) {
@@ -122,6 +129,9 @@ export class Trie {
         next = sub_trie.trie
       }
       sub_trie._insert(pattern, next)
+      if(target !== undefined) {
+        console.log({target})
+      }
       let parsed = sub_trie.trie
       for (let node of new Set(nodes)) {
         Object.assign(node, parsed)
