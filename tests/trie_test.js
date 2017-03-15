@@ -38,10 +38,13 @@ test('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
 test('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)+ya`, 1)
+  //console.log(str(trie))
   t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
   t.deepEqual(trie.match("helloloya"), {value: 1, match: "helloloya"})
+  t.deepEqual(trie.match("hellolololoya"), {value: 1, match: "hellolololoya"})
   t.true(trie.match("hellollya") === null) // should NOT match
   t.true(trie.match("helloolya") === null) // caused endless loop before
+  t.true(trie.match("helya") === null)
 })
 
 test('Trie a[0-9]*z works', t => {
@@ -106,13 +109,19 @@ test('Trie capture-groups work (1)', t => {
   trie.define("WS", "[ \t\r\n\f]")
   trie.define("OP", r`[+\-]`)
   trie.define("VAR", "[a-e]+")
-  trie.insert("{left:VAR}{operator:OP}{right:VAR}", 1)
+  trie.insert("{left:VAR}+{operator:OP}{right:VAR}+", 1)
+  console.log("before", str(trie))
+  t.deepEqual(trie.match("a+b"), {left: "a", operator: "+", right: "b"})
   t.deepEqual(trie.match("aa+ab"), {left: "aa", operator: "+", right: "ab"})
+  trie.insert("{left:VAR}*{operator:OP}{right:VAR}*", 1)
+  console.log("after", str(trie))
+  //t.deepEqual(trie.match("+"), {operator: "+"}) // FIXME
 })
 
 test('Trie capture-groups work (2)', t => {
   let trie = new Trie()
   trie.define("VAR", "[a-e]+")
   trie.insert("{word:VAR}(,{word:VAR})*", 1)
+  //console.log(str(trie))
   t.deepEqual(trie.match("a,b,abab,c,d"), {"word": ["a", "b", "abab", "c", "d"]})
 })

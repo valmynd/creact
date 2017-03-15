@@ -41,6 +41,7 @@ export class Trie {
   }
 
   _insert(key, next) {
+    console.log("_insert", key, {next: Object.keys(next)})
     let k, quantifier, optional, repeatable, current = this.trie
     let value_nodes = [], placeholders = []
     for (let i = 0, len = key.length; i < len; i++) {
@@ -76,7 +77,7 @@ export class Trie {
               target = s[0]
             }
           }
-          placeholders.push({pattern, target, next, optional, repeatable, nodes})
+          placeholders.push({pattern, target, next, repeatable, nodes})
         }
         current = next
         if (optional) value_nodes.push(current)
@@ -122,8 +123,9 @@ export class Trie {
     for (let node of value_nodes) {
       Object.assign(node, next) // FILO
     }
+    //console.log({value_nodes, placeholders})
     // resolve placeholders
-    for (let {pattern, target, next, optional, repeatable, nodes} of placeholders.reverse()) {
+    for (let {pattern, target, next, repeatable, nodes} of placeholders.reverse()) {
       if (target !== undefined) {
         let t = next[TARGET_KEY]
         if (t !== undefined) t.push(target)
@@ -132,17 +134,13 @@ export class Trie {
       let sub_trie = new Trie()
       sub_trie.known = this.known
       if (repeatable) {
-        if (optional) {
-          Object.assign(sub_trie.trie, next)
-          next = sub_trie.trie
-        } else {
-          let second_trie = new Trie()
-          second_trie.known = this.known
-          second_trie._insert(pattern, next)
-          Object.assign(sub_trie.trie, second_trie.trie)
-          Object.assign(second_trie.trie, next)
-          next = second_trie.trie
-        }
+        // limit to values that actually exist when inserting the pattern
+        let second_trie = new Trie()
+        sub_trie.known = this.known
+        second_trie._insert(pattern, next)
+        Object.assign(sub_trie.trie, second_trie.trie)
+        Object.assign(second_trie.trie, next)
+        next = second_trie.trie
       }
       sub_trie._insert(pattern, next)
       let parsed = sub_trie.trie

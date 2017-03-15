@@ -1,0 +1,55 @@
+{
+  "trie": {
+    "a": {
+      "a": "~trie~a",
+      "b": "~trie~a",
+      "c": "~trie~a",
+      "d": "~trie~a",
+      "e": "~trie~a",
+      "+": {
+        "_v": 1,
+        "_t": [
+          "right",
+          "operator"
+        ],
+        "a": {
+          "a": "~trie~a~+~a",
+          "b": "~trie~a~+~a",
+          "c": "~trie~a~+~a",
+          "d": "~trie~a~+~a",
+          "e": "~trie~a~+~a",
+          "_v": 1,
+          "_t": "~trie~a~+~_t"
+        },
+        "b": "~trie~a~+~a",
+        "c": "~trie~a~+~a",
+        "d": "~trie~a~+~a",
+        "e": "~trie~a~+~a",
+        "_c": [
+          "right"
+        ]
+      },
+      "-": "~trie~a~+",
+      "_c": [
+        "operator",
+        "left"
+      ],
+      "_t": [
+        "left"
+      ]
+    },
+    "b": "~trie~a",
+    "c": "~trie~a",
+    "d": "~trie~a",
+    "e": "~trie~a",
+    "_c": "~trie~a~_c",
+    "+": "~trie~a~+",
+    "-": "~trie~a~+",
+    "_t": "~trie~a~_t"
+  },
+  "known": {
+    "WS": "[ \t\r\n\f]",
+    "OP": "[+\\-]",
+    "VAR": "[a-e]+"
+  }
+}

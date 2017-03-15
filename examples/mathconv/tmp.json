@@ -1,46 +1,71 @@
 {
   "trie": {
     "a": {
-      "a": "~trie~a",
-      "b": "~trie~a",
-      "c": "~trie~a",
-      "d": "~trie~a",
-      "e": "~trie~a",
-      "_v": 1,
-      ",": {
-        "a": {
-          "a": "~trie~a~,~a",
-          "b": "~trie~a~,~a",
-          "c": "~trie~a~,~a",
-          "d": "~trie~a~,~a",
-          "e": "~trie~a~,~a",
-          "_v": 1,
-          ",": "~trie~a~,",
+      "a": {
+        "a": "~trie~a~a",
+        "b": "~trie~a~a",
+        "c": "~trie~a~a",
+        "d": "~trie~a~a",
+        "e": "~trie~a~a",
+        "+": {
+          "a": {
+            "a": {
+              "a": "~trie~a~a~+~a~a",
+              "b": "~trie~a~a~+~a~a",
+              "c": "~trie~a~a~+~a~a",
+              "d": "~trie~a~a~+~a~a",
+              "e": "~trie~a~a~+~a~a",
+              "_v": 1,
+              "_t": [
+                "right"
+              ]
+            },
+            "b": "~trie~a~a~+~a~a",
+            "c": "~trie~a~a~+~a~a",
+            "d": "~trie~a~a~+~a~a",
+            "e": "~trie~a~a~+~a~a",
+            "_v": 1,
+            "_t": "~trie~a~a~+~a~a~_t"
+          },
+          "b": "~trie~a~a~+~a",
+          "c": "~trie~a~a~+~a",
+          "d": "~trie~a~a~+~a",
+          "e": "~trie~a~a~+~a",
+          "_c": [
+            "right"
+          ],
           "_t": [
-            "word"
+            "operator"
           ]
         },
-        "b": "~trie~a~,~a",
-        "c": "~trie~a~,~a",
-        "d": "~trie~a~,~a",
-        "e": "~trie~a~,~a",
+        "-": "~trie~a~a~+",
         "_c": [
-          "word"
+          "operator"
+        ],
+        "_t": [
+          "left"
         ]
       },
-      "_t": [
-        "word"
-      ]
+      "b": "~trie~a~a",
+      "c": "~trie~a~a",
+      "d": "~trie~a~a",
+      "e": "~trie~a~a",
+      "+": "~trie~a~a~+",
+      "-": "~trie~a~a~+",
+      "_c": "~trie~a~a~_c",
+      "_t": "~trie~a~a~_t"
     },
     "b": "~trie~a",
     "c": "~trie~a",
     "d": "~trie~a",
     "e": "~trie~a",
     "_c": [
-      "word"
+      "left"
     ]
   },
   "known": {
+    "WS": "[ \t\r\n\f]",
+    "OP": "[+\\-]",
     "VAR": "[a-e]+"
   }
 }
