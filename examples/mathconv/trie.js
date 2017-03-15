@@ -31,22 +31,9 @@ export class Trie {
     return obj
   }
 
-  _parse_named_group(str, next, repeatable) {
-    let identifier, target, s = str.split(":")
-    if (s.length === 1) {
-      identifier = s[0] // only strings for now, as it could be a circular definition
-      return {identifier, next, repeatable}
-    } else {
-      identifier = s[1]
-      target = s[0]
-      return {identifier, target, next, repeatable}
-    }
-  }
-
   _insert(key, next) {
-    console.log("_insert", key, next)
     let k, quantifier, optional, repeatable, current = this.trie
-    let value_nodes = [], placeholder_nodes = []
+    let value_nodes = [], placeholders = []
     for (let i = 0, len = key.length; i < len; i++) {
       k = key[i]
       quantifier = null
@@ -70,23 +57,15 @@ export class Trie {
           if (repeatable) Object.assign(next, obj)
           value_nodes.forEach(node => Object.assign(node, obj))
         } else {
-          if (k === "(") placeholder = {pattern, next, repeatable}
-          else placeholder = this._parse_named_group(pattern, next, key, repeatable)
-          if (PLACEHOLDER_KEY in current) {
-            current[PLACEHOLDER_KEY].push(placeholder)
+          let nodes = [current, ...value_nodes]
+          if (k === "(") {
+            placeholder = {pattern, next, repeatable, nodes}
           } else {
-            current[PLACEHOLDER_KEY] = [placeholder]
-            placeholder_nodes.push(current)
+            let s = pattern.split(":")
+            if (s.length === 1) placeholder = {identifier: s[0], next, repeatable, nodes}
+            else placeholder = {identifier: s[1], target: s[0], next, repeatable, nodes}
           }
-          value_nodes.forEach(node => {
-            let tmp = node[PLACEHOLDER_KEY]
-            if (tmp === undefined) {
-              node[PLACEHOLDER_KEY] = [placeholder]
-              placeholder_nodes.push(node)
-            } else if (tmp !== current) {
-              tmp.push(placeholder)
-            }
-          })
+          placeholders.push(placeholder)
         }
         current = next
         if (optional) value_nodes.push(current)
@@ -115,7 +94,6 @@ export class Trie {
           repeatable = (quantifier !== "?")
         }
         // advance previous and current
-        console.log({k}, current)
         current = current[k] || (current[k] = {})
         value_nodes.forEach(node => {
           let tmp = node[k]
@@ -129,29 +107,21 @@ export class Trie {
         if (quantifier !== null) i++
       }
     }
-    console.log({placeholder_nodes, value_nodes})
     // assign value to nodes that should cause a match
     for (let node of value_nodes) {
-      console.log({node})
       Object.assign(node, next) // first come, LAST served now (!)
     }
     // resolve placeholders
-    let parsed_placeholders = new Map()
-    for (let node of placeholder_nodes) {
-      for (let placeholder of new Set(node[PLACEHOLDER_KEY])) {
-        let parsed = parsed_placeholders.get(placeholder)
-        if(parsed === undefined) {
-          let sub_trie = new Trie()
-          sub_trie.known = this.known
-          if(placeholder.pattern !== undefined) {
-            sub_trie._insert(placeholder.pattern, next)
-          }
-          parsed = sub_trie.trie
-          parsed_placeholders.set(placeholder, parsed)
-        }
+    for (let {pattern, identifier, target, next, repeatable, nodes} of placeholders) {
+      let sub_trie = new Trie()
+      sub_trie.known = this.known
+      if (pattern !== undefined) {
+        sub_trie._insert(pattern, next)
+      }
+      let parsed = sub_trie.trie
+      for (let node of new Set(nodes)) {
         Object.assign(node, parsed)
       }
-      delete node[PLACEHOLDER_KEY]
     }
   }
 

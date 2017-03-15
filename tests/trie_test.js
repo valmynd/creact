@@ -28,7 +28,7 @@ test('Trie hel(lo) works', t => { // hel(la|(lo)+)?
   t.deepEqual(trie.match("hello"), {value: 1, match: "hello"})
 })
 
-test.skip('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
+test('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)?ya`, 1)
   console.log(str(trie))
