@@ -74,19 +74,6 @@ const unary_operators = [
 
 class TrieTodo {
   /**
-   * Add a named Group
-   * @example
-   *  trie.define("FLOAT", r`[0-9]+(.[0-9]+)?`)
-   *  trie.insert("a{FLOAT}", 1)
-   *  trie.match("a4.2")
-   * @param {string} identifier
-   * @param {string} pattern
-   */
-  define(identifier, pattern) {
-    this.known[identifier] = pattern.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT)
-  }
-
-  /**
    * define Binary Left-Associative Operator
    * @param {int} priority
    * @param {string} identifier

@@ -57,15 +57,17 @@ export class Trie {
           if (repeatable) Object.assign(next, obj)
           value_nodes.forEach(node => Object.assign(node, obj))
         } else {
-          let nodes = [current, ...value_nodes]
-          if (k === "(") {
-            placeholder = {pattern, next, repeatable, nodes}
-          } else { // k === "{"
+          let nodes = [current, ...value_nodes], target
+          if (k === "{") {
             let s = pattern.split(":")
-            if (s.length === 1) placeholder = {identifier: s[0], next, repeatable, nodes}
-            else placeholder = {identifier: s[1], target: s[0], next, repeatable, nodes}
+            if (s.length === 1) {
+              pattern = this.known[s[0]]
+            } else {
+              pattern = this.known[s[1]]
+              target = s[0]
+            }
           }
-          placeholders.push(placeholder)
+          placeholders.push({pattern, target, next, repeatable, nodes})
         }
         current = next
         if (optional) value_nodes.push(current)
@@ -112,21 +114,32 @@ export class Trie {
       Object.assign(node, next) // first come, LAST served now (!)
     }
     // resolve placeholders
-    for (let {pattern, identifier, target, next, repeatable, nodes} of placeholders) {
+    for (let {pattern, target, next, repeatable, nodes} of placeholders.reverse()) {
       let sub_trie = new Trie()
       sub_trie.known = this.known
-      if(repeatable) {
+      if (repeatable) {
         Object.assign(sub_trie.trie, next)
         next = sub_trie.trie
       }
-      if (pattern !== undefined) {
-        sub_trie._insert(pattern, next)
-      }
+      sub_trie._insert(pattern, next)
       let parsed = sub_trie.trie
       for (let node of new Set(nodes)) {
         Object.assign(node, parsed)
       }
     }
+  }
+
+  /**
+   * Add a named Group
+   * @example
+   *  trie.define("FLOAT", r`[0-9]+(.[0-9]+)?`)
+   *  trie.insert("a{FLOAT}", 1)
+   *  trie.match("a4.2")
+   * @param {string} identifier
+   * @param {string} pattern
+   */
+  define(identifier, pattern) {
+    this.known[identifier] = pattern.replace(/\\\\/, ESCAPED_BACKSLASH_REPLACEMENT)
   }
 
   /**

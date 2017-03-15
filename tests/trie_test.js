@@ -46,7 +46,7 @@ test('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
   t.true(trie.match("helloolya") === null) // caused endless loop before
 })
 
-test.skip('Trie a[0-9]*z works', t => {
+test('Trie a[0-9]*z works', t => {
   let trie = new Trie()
   trie.insert(r`a[0-9]*z`, 1)
   t.deepEqual(trie.match("a2017z"), {value: 1, match: "a2017z"})
@@ -59,7 +59,7 @@ test.skip('Trie a[0-9]*z works', t => {
   t.deepEqual(trie.match("a90000"), {value: 1, match: "a90000"})
 })
 
-test.skip('Trie [0-9]+(.[0-9]+)? works', t => {
+test('Trie [0-9]+(.[0-9]+)? works', t => {
   const trie = new Trie()
   trie.insert(r`[0-9]+(.[0-9]+)?`, 1)
   t.deepEqual(trie.match("21.91"), {value: 1, match: "21.91"})
@@ -67,7 +67,7 @@ test.skip('Trie [0-9]+(.[0-9]+)? works', t => {
   t.deepEqual(trie.match("21."), {value: 1, match: "21"})
 })
 
-test.skip('Trie named groups work', t => {
+test('Trie named groups work', t => {
   const trie = new Trie()
   trie.define("FLOAT", r`[0-9]+(.[0-9]+)?`)
   trie.insert("a{FLOAT}?", 1)
@@ -76,7 +76,7 @@ test.skip('Trie named groups work', t => {
   t.deepEqual(trie.match("a"), {value: 1, match: "a"})
 })
 
-test.skip('Trie backslash handling works', t => {
+test('Trie backslash handling works', t => {
   let trie = new Trie()
   trie.insert(r`a\{FLOAT}?`, 1)
   t.deepEqual(trie.match("a{FLOAT"), {value: 1, match: "a{FLOAT"})
@@ -87,12 +87,13 @@ test.skip('Trie backslash handling works', t => {
   t.deepEqual(trie.match("a\\"), {value: 1, match: "a\\"})
 })
 
-test.skip('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
+test('Trie {GREEK_LETTER}{WS}*(+|-){WS}*{GREEK_LETTER} works', t => {
   let trie = new Trie()
   trie.define("WS", "[ \t\r\n\f]")
   trie.define("GREEK_LETTER", Object.keys(a.TOKENS.GREEK_LETTER).join("|"))
   trie.insert("{GREEK_LETTER}(+|-){GREEK_LETTER}", 1)
   t.deepEqual(trie.match("α+α"), {value: 1, match: "α+α"})
+  t.deepEqual(trie.match("ζ+Π"), {value: 1, match: "ζ+Π"})
   console.log(str(trie))
   trie = new Trie()
   trie.insert("[a-c][0-2]?[d-f]?[3-5]?[g-h]", 1)
