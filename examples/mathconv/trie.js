@@ -79,6 +79,7 @@ export class Trie {
           placeholders.push({pattern, target, next, repeatable, nodes})
         }
         current = next
+        console.log({optional, repeatable}, k)
         if (optional) value_nodes.push(current)
         else value_nodes = [current]
         i += ++c
@@ -179,21 +180,26 @@ export class Trie {
    * @returns {{match: string, value: *}|null}
    */
   match(str) {
-    let n, v, c, t, i = 0, current = this.trie, capturing = {}, result = {}
+    let n, v, c, t, i = 0, current = this.trie, last_capture = [null, 0], capturing = {}, result = {}
     let last_value = null, last_value_i = 0
     for (let len = str.length; i <= len; i++) {
       c = current[CAPTURE_KEY]
       t = current[TARGET_KEY]
       if (t !== undefined) {
         for (let targeted of t) {
-          let a = capturing[targeted], l = i - a
-          result[targeted] = str.substr(a, l)
-          delete capturing[targeted]
+          let a = capturing[targeted]
+          if (last_capture[0] !== targeted) {
+            a = last_capture[1]
+          }
+          result[targeted] = str.substr(a, i - a)
+          last_capture = [targeted, i]
         }
       }
       if (c !== undefined) {
         for (let captured of c) {
-          capturing[captured] = i
+          if (!(captured in capturing)) {
+            capturing[captured] = i
+          }
         }
       }
       if (i === len) break

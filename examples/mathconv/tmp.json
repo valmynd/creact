@@ -1,8 +1,18 @@
 {
   "trie": {
     "a": {
+      "a": "~trie~a",
+      "b": "~trie~a",
+      "c": "~trie~a",
+      "d": "~trie~a",
+      "e": "~trie~a",
       "+": {
         "a": {
+          "a": "~trie~a~+~a",
+          "b": "~trie~a~+~a",
+          "c": "~trie~a~+~a",
+          "d": "~trie~a~+~a",
+          "e": "~trie~a~+~a",
           "_v": 1,
           "_t": [
             "right"
@@ -38,6 +48,6 @@
   "known": {
     "WS": "[ \t\r\n\f]",
     "OP": "[+\\-]",
-    "LETTER": "[a-e]"
+    "VAR": "[a-e]+"
   }
 }
