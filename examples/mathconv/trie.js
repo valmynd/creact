@@ -1,4 +1,6 @@
 const VALUE_KEY = "_v"
+const CAPTURE_KEY = "_c"
+const TARGET_KEY = "_t"
 const ESCAPED_BACKSLASH_REPLACEMENT = "\u0003"
 const ESCAPED_MINUS_REPLACEMENT = "\u0003"
 const ESCAPED_MINUS_REPLACEMENT_CC = ESCAPED_MINUS_REPLACEMENT.charCodeAt(0)
@@ -122,6 +124,11 @@ export class Trie {
     }
     // resolve placeholders
     for (let {pattern, target, next, repeatable, nodes} of placeholders.reverse()) {
+      if (target !== undefined) {
+        let t = next[TARGET_KEY]
+        if (t !== undefined) t.push(target)
+        else next[TARGET_KEY] = [target]
+      }
       let sub_trie = new Trie()
       sub_trie.known = this.known
       if (repeatable) {
@@ -129,12 +136,14 @@ export class Trie {
         next = sub_trie.trie
       }
       sub_trie._insert(pattern, next)
-      if(target !== undefined) {
-        console.log({target})
-      }
       let parsed = sub_trie.trie
       for (let node of new Set(nodes)) {
         Object.assign(node, parsed)
+        if (target !== undefined) {
+          let c = node[CAPTURE_KEY]
+          if (c !== undefined) c.push(target)
+          else node[CAPTURE_KEY] = [target]
+        }
       }
     }
   }
@@ -170,9 +179,24 @@ export class Trie {
    * @returns {{match: string, value: *}|null}
    */
   match(str) {
-    let n, v, i = 0, current = this.trie
+    let n, v, c, t, i = 0, current = this.trie, capturing = {}, result = {}
     let last_value = null, last_value_i = 0
-    for (let len = str.length; i < len; i++) {
+    for (let len = str.length; i <= len; i++) {
+      c = current[CAPTURE_KEY]
+      t = current[TARGET_KEY]
+      if (t !== undefined) {
+        for (let targeted of t) {
+          let a = capturing[targeted], l = i - a
+          result[targeted] = str.substr(a, l)
+          delete capturing[targeted]
+        }
+      }
+      if (c !== undefined) {
+        for (let captured of c) {
+          capturing[captured] = i
+        }
+      }
+      if (i === len) break
       n = current[str[i]]
       if (n === undefined) break
       // keep track of last value
@@ -185,6 +209,7 @@ export class Trie {
       current = n
     }
     if (last_value === null) return null
+    if (Object.keys(result).length > 0) console.log(result, capturing)
     return {match: str.substr(0, last_value_i + 1), value: last_value}
   }
 }

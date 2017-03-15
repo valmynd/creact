@@ -3,19 +3,37 @@
     "a": {
       "+": {
         "a": {
-          "_v": 1
+          "_v": 1,
+          "_t": [
+            "right"
+          ]
         },
         "b": "~trie~a~+~a",
         "c": "~trie~a~+~a",
         "d": "~trie~a~+~a",
-        "e": "~trie~a~+~a"
+        "e": "~trie~a~+~a",
+        "_c": [
+          "right"
+        ],
+        "_t": [
+          "operator"
+        ]
       },
-      "-": "~trie~a~+"
+      "-": "~trie~a~+",
+      "_c": [
+        "operator"
+      ],
+      "_t": [
+        "left"
+      ]
     },
     "b": "~trie~a",
     "c": "~trie~a",
     "d": "~trie~a",
-    "e": "~trie~a"
+    "e": "~trie~a",
+    "_c": [
+      "left"
+    ]
   },
   "known": {
     "WS": "[ \t\r\n\f]",
