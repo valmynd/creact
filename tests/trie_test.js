@@ -31,15 +31,15 @@ test('Trie hel(lo) works', t => { // hel(la|(lo)+)?
 test('Trie hel(lo)?ya works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)?ya`, 1)
-  console.log(str(trie))
   t.deepEqual(trie.match("helya"), {value: 1, match: "helya"})
   t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
   t.true(trie.match("hellya") === null)
 })
 
-test.skip('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
+test('Trie hel(lo)+ya works', t => { // hel(la|(lo)+)?
   const trie = new Trie()
   trie.insert(r`hel(lo)+ya`, 1)
+  console.log(str(trie))
   t.deepEqual(trie.match("helloya"), {value: 1, match: "helloya"})
   t.deepEqual(trie.match("helloloya"), {value: 1, match: "helloloya"})
   t.true(trie.match("hellollya") === null) // should NOT match

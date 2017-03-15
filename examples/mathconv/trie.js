@@ -60,7 +60,7 @@ export class Trie {
           let nodes = [current, ...value_nodes]
           if (k === "(") {
             placeholder = {pattern, next, repeatable, nodes}
-          } else {
+          } else { // k === "{"
             let s = pattern.split(":")
             if (s.length === 1) placeholder = {identifier: s[0], next, repeatable, nodes}
             else placeholder = {identifier: s[1], target: s[0], next, repeatable, nodes}
@@ -115,6 +115,10 @@ export class Trie {
     for (let {pattern, identifier, target, next, repeatable, nodes} of placeholders) {
       let sub_trie = new Trie()
       sub_trie.known = this.known
+      if(repeatable) {
+        Object.assign(sub_trie.trie, next)
+        next = sub_trie.trie
+      }
       if (pattern !== undefined) {
         sub_trie._insert(pattern, next)
       }
