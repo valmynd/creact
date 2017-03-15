@@ -114,5 +114,5 @@ test('Trie capture-groups work (2)', t => {
   let trie = new Trie()
   trie.define("VAR", "[a-e]+")
   trie.insert("{word:VAR}(,{word:VAR})*", 1)
-  t.deepEqual(trie.match("a,b,ab"), {"word": ["a", "b", "ab"]})
+  t.deepEqual(trie.match("a,b,abab,c,d"), {"word": ["a", "b", "abab", "c", "d"]})
 })

@@ -193,7 +193,7 @@ export class Trie {
           if (last_targeted === targeted) {
             if (pos !== null) res[pos] = str.substr(a, i - a)
             else result[targeted] = str.substr(a, i - a)
-            last_capture = [targeted, i, pos]
+            last_capture[1] = i
           } else {
             if (last_targeted !== null) a = last_i
             if (Array.isArray(res)) {
