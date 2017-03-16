@@ -132,10 +132,10 @@ export class Trie {
       let sub_trie = new Trie()
       sub_trie.known = this.known
       if (repeatable) {
-        if (optional) {
+        if (optional) { // *
           Object.assign(sub_trie.trie, next)
           next = sub_trie.trie
-        } else {
+        } else { // +
           let second_trie = new Trie()
           second_trie.known = this.known
           second_trie._insert(pattern, next)

@@ -2,70 +2,14 @@
   "trie": {
     "a": {
       "a": {
-        "a": "~trie~a~a",
-        "b": "~trie~a~a",
-        "c": "~trie~a~a",
-        "d": "~trie~a~a",
-        "e": "~trie~a~a",
-        "+": {
-          "a": {
-            "a": {
-              "a": "~trie~a~a~+~a~a",
-              "b": "~trie~a~a~+~a~a",
-              "c": "~trie~a~a~+~a~a",
-              "d": "~trie~a~a~+~a~a",
-              "e": "~trie~a~a~+~a~a",
-              "_v": 1,
-              "_t": [
-                "right"
-              ]
-            },
-            "b": "~trie~a~a~+~a~a",
-            "c": "~trie~a~a~+~a~a",
-            "d": "~trie~a~a~+~a~a",
-            "e": "~trie~a~a~+~a~a",
-            "_v": 1,
-            "_t": "~trie~a~a~+~a~a~_t"
+        "b": {
+          "d": {
+            "_v": 1
           },
-          "b": "~trie~a~a~+~a",
-          "c": "~trie~a~a~+~a",
-          "d": "~trie~a~a~+~a",
-          "e": "~trie~a~a~+~a",
-          "_c": [
-            "right"
-          ],
-          "_t": [
-            "operator"
-          ]
-        },
-        "-": "~trie~a~a~+",
-        "_c": [
-          "operator"
-        ],
-        "_t": [
-          "left"
-        ]
-      },
-      "b": "~trie~a~a",
-      "c": "~trie~a~a",
-      "d": "~trie~a~a",
-      "e": "~trie~a~a",
-      "+": "~trie~a~a~+",
-      "-": "~trie~a~a~+",
-      "_c": "~trie~a~a~_c",
-      "_t": "~trie~a~a~_t"
-    },
-    "b": "~trie~a",
-    "c": "~trie~a",
-    "d": "~trie~a",
-    "e": "~trie~a",
-    "_c": [
-      "left"
-    ]
+          "a": "~trie~a~a"
+        }
+      }
+    }
   },
-  "known": {
-    "WS": "[ \t\r\n\f]",
-    "OP": "[+\\-]",
-    "VAR": "[a-e]+"
-  }
+  "known": {}
 }
