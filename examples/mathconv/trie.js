@@ -1,6 +1,6 @@
 const VALUE_KEY = "_v"
-const CAPTURE_KEY = "_c"
-const TARGET_KEY = "_t"
+const CAPTURE_START_KEY = "_c"
+const CAPTURE_STOP_KEY = "_t"
 const ESCAPED_BACKSLASH_REPLACEMENT = "\u0003"
 const ESCAPED_MINUS_REPLACEMENT = "\u0003"
 const ESCAPED_MINUS_REPLACEMENT_CC = ESCAPED_MINUS_REPLACEMENT.charCodeAt(0)
@@ -125,9 +125,9 @@ export class Trie {
     // resolve placeholders
     for (let {pattern, target, next, optional, repeatable, nodes} of placeholders.reverse()) {
       if (target !== undefined) {
-        let t = next[TARGET_KEY]
+        let t = next[CAPTURE_STOP_KEY]
         if (t !== undefined) t.push(target)
-        else next[TARGET_KEY] = [target]
+        else next[CAPTURE_STOP_KEY] = [target]
       }
       let sub_trie = new Trie()
       sub_trie.known = this.known
@@ -149,9 +149,10 @@ export class Trie {
       for (let node of new Set(nodes)) {
         Object.assign(node, parsed)
         if (target !== undefined) {
-          let c = node[CAPTURE_KEY]
-          if (c !== undefined) c.push(target)
-          else node[CAPTURE_KEY] = [target]
+          let c = node[CAPTURE_START_KEY]
+          let first_chars = Object.keys(parsed).filter(k => k.length === 1).join("")
+          if (c !== undefined) c.push([target, first_chars])
+          else node[CAPTURE_START_KEY] = [[target, first_chars]]
         }
       }
     }
@@ -189,42 +190,32 @@ export class Trie {
    */
   match(str) {
     let n, v, c, t, i = 0, current = this.trie
-    let capturing = {}, result = {}
-    let last_capture = [null, 0, null] // last_targeted, last_i, index within result[target-id], or null if no array
     let last_value = null, last_value_i = 0
+    let capturing = {}, result = {}
     for (let len = str.length; i <= len; i++) {
-      c = current[CAPTURE_KEY]
-      t = current[TARGET_KEY]
+      c = current[CAPTURE_START_KEY]
+      t = current[CAPTURE_STOP_KEY]
       if (t !== undefined) {
-        for (let targeted of t) {
-          let a = capturing[targeted], res = result[targeted]
-          let [last_targeted, last_i, pos] = last_capture
-          if (last_targeted === targeted) {
-            if (pos !== null) res[pos] = str.substr(a, i - a)
-            else result[targeted] = str.substr(a, i - a)
-            last_capture[1] = i
+        for (let target of t) {
+          let a = capturing[target], res = result[target]
+          //console.log("capture", target, i === a + 1, {a, i, res})
+          if (Array.isArray(res)) {
+            if (i === a + 1) res.push(str.substr(a, i - a))
+            else res[res.length - 1] = str.substr(a, i - a)
+          } else if (res !== undefined) {
+            if (i === a + 1) result[target] = [res, str.substr(a, i - a)]
+            else result[target] = str.substr(a, i - a)
           } else {
-            if (last_targeted !== null) a = last_i
-            if (Array.isArray(res)) {
-              pos = res.length
-              res.push(str.substr(a, i - a))
-            } else if (res !== undefined) {
-              pos = 1
-              result[targeted] = [res, str.substr(a, i - a)]
-            } else {
-              result[targeted] = str.substr(a, i - a)
-            }
-            last_capture = [targeted, i, pos]
+            result[target] = str.substr(a, i - a)
           }
         }
       } else {
-        last_capture = [null, 0, null]
         capturing = {}
       }
       if (c !== undefined) {
-        for (let captured of c) {
-          if (!(captured in capturing)) {
-            capturing[captured] = i
+        for (let [target, first_chars] of c) {
+          if (first_chars.includes(str[i]) && !(target in capturing)) {
+            capturing[target] = i
           }
         }
       }
@@ -242,7 +233,7 @@ export class Trie {
     }
     if (last_value === null) return null
     if (Object.keys(result).length > 0) {
-      console.log(result, capturing)
+      //console.log(result, capturing)
       return result
     }
     return {match: str.substr(0, last_value_i + 1), value: last_value}
