@@ -198,7 +198,7 @@ export class Trie {
       if (t !== undefined) {
         for (let target of t) {
           let a = capturing[target], res = result[target]
-          //console.log("capture", target, i === a + 1, {a, i, res})
+          if (a === undefined) continue // target is optional and omitted
           if (Array.isArray(res)) {
             if (i === a + 1) res.push(str.substr(a, i - a))
             else res[res.length - 1] = str.substr(a, i - a)
@@ -210,7 +210,7 @@ export class Trie {
           }
         }
       } else {
-        capturing = {}
+        capturing = {} // TODO: cleaner way would be to remove keys that aren't part of t -> need testcase
       }
       if (c !== undefined) {
         for (let [target, first_chars] of c) {
