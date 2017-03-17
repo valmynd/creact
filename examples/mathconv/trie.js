@@ -196,9 +196,12 @@ export class Trie {
       c = current[CAPTURE_START_KEY]
       t = current[CAPTURE_STOP_KEY]
       if (t !== undefined) {
+        let filtered_copy_of_capturing = {}
         for (let target of t) {
-          let a = capturing[target], res = result[target]
+          let a = capturing[target]
           if (a === undefined) continue // target is optional and omitted
+          filtered_copy_of_capturing[target] = a
+          let res = result[target]
           if (Array.isArray(res)) {
             if (i === a + 1) res.push(str.substr(a, i - a))
             else res[res.length - 1] = str.substr(a, i - a)
@@ -209,8 +212,9 @@ export class Trie {
             result[target] = str.substr(a, i - a)
           }
         }
+        capturing = filtered_copy_of_capturing
       } else {
-        capturing = {} // TODO: cleaner way would be to remove keys that aren't part of t -> need testcase
+        capturing = {}
       }
       if (c !== undefined) {
         for (let [target, first_chars] of c) {
@@ -233,7 +237,7 @@ export class Trie {
     }
     if (last_value === null) return null
     if (Object.keys(result).length > 0) {
-      //console.log(result, capturing)
+      console.log(result, capturing)
       return result
     }
     return {match: str.substr(0, last_value_i + 1), value: last_value}

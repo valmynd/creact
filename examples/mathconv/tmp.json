@@ -41,7 +41,15 @@
             "operator"
           ]
         },
-        "-": "~trie~a~a~+",
+        "-": {
+          "a": "~trie~a~a~+~a",
+          "b": "~trie~a~a~+~a",
+          "c": "~trie~a~a~+~a",
+          "d": "~trie~a~a~+~a",
+          "e": "~trie~a~a~+~a",
+          "_c": "~trie~a~a~+~_c",
+          "_t": "~trie~a~a~+~_t"
+        },
         "_c": [
           [
             "operator",
@@ -57,7 +65,7 @@
       "d": "~trie~a~a",
       "e": "~trie~a~a",
       "+": "~trie~a~a~+",
-      "-": "~trie~a~a~+",
+      "-": "~trie~a~a~-",
       "_c": "~trie~a~a~_c",
       "_t": "~trie~a~a~_t"
     },
@@ -74,7 +82,7 @@
   },
   "known": {
     "WS": "[ \t\r\n\f]",
-    "OP": "[+\\-]",
+    "OP": "+|-",
     "VAR": "[a-e]+"
   }
 }

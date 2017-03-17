@@ -119,7 +119,7 @@ test('Trie capture-groups work (1)', t => {
   trie.define("VAR", "[a-e]+")
   trie.insert("{left:VAR}*{operator:OP}{right:VAR}*", 1)
   //console.log("after", str(trie))
-  t.deepEqual(trie.match("+"), {operator: "+"}) // FIXME
+  t.deepEqual(trie.match("+"), {operator: "+"})
 })
 
 test.skip('Trie capture-groups work (2)', t => {
