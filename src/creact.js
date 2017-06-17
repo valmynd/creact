@@ -21,6 +21,9 @@ export function h(tag, attributes, ...args) {
   return {tag, attributes, children}
 }
 
+// make it available globally
+global.h = h
+
 /**
  * Create a DOM Element that corresponds to a Virtual DOM Node (usually created via JSX)
  * @param {VirtualNode} virtual_node
