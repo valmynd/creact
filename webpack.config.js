@@ -1,9 +1,9 @@
 var path = require('path');
 
 module.exports = {
-  entry: [
-    './examples/webgl/example.js'
-  ],
+  entry: {
+    'app': './examples/webgl/example.js'
+  },
   output: {
     path: __dirname + '/dist',
     filename: 'webgl-example.js'

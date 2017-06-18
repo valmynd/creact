@@ -85,6 +85,12 @@ function _merge(virtual_node, dom_node, level) {
       // be replaced (!) - instead, the existing node simply should get merged and _component-assigned
       component = instantiate(virtual_node)
       virtual_node = render(component)
+      if (virtual_node.tag !== dom_node.nodeName.toLowerCase()) {
+        // e.g. dom_node is <div>, but component.render() returned <canvas>
+        let ret = replaceDomNode(dom_node, create(virtual_node))
+        link(ret, component) // virtual_node was already overwritten with render(component) so it has to be linked
+        return ret // ^avoids redundant render() by using the output of render() rather than the original virtual_node
+      }
       link(dom_node, component)
     } else {
       let shall_update = component.setProperties(virtual_node.attributes, virtual_node.children)
