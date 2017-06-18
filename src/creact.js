@@ -1,12 +1,14 @@
 import {
   equals,
+  createDomNode,
   removeDomNode,
   replaceDomNode,
   instantiate,
   link,
   render,
   setListener,
-  removeListener
+  removeListener,
+  conclude
 } from "./creact_utils";
 
 /**
@@ -30,15 +32,13 @@ global.h = h
  * @returns {Element}
  */
 export function create(virtual_node) {
-  let element, component
+  let component
   if (typeof virtual_node.tag === 'function') {
     component = instantiate(virtual_node)
     virtual_node = render(component)
   }
   let {tag, children, attributes} = virtual_node
-  if (tag === "svg" || tag === "path" || tag === "g" || tag === "text" || tag === "rect")
-    element = document.createElementNS("http://www.w3.org/2000/svg", tag)
-  else element = document.createElement(tag)
+  let element = createDomNode(tag)
   if (attributes) for (let a in attributes)
     if (a.startsWith("on")) setListener(element, a.substring(2).toLowerCase(), attributes[a])
     else element.setAttribute(a, attributes[a])
@@ -58,9 +58,10 @@ export function create(virtual_node) {
  * Change a DOM Element to equal a Virtual DOM Node (usually created via JSX)
  * @param {VirtualNode} virtual_node
  * @param {Node|Element} dom_node
+ * @param {number} [level]
  * @returns {Node|Element} (the mutated dom_node)
  */
-export function merge(virtual_node, dom_node) {
+export function merge(virtual_node, dom_node, level = 0) {
   if (virtual_node == null) {
     console.log("NULL", dom_node)
     return
@@ -164,7 +165,7 @@ export function merge(virtual_node, dom_node) {
         }
       }
       if (dom_child) { // morph dom_child to match virtual_child (recursively)
-        merged_children.push(merge(virtual_child, dom_child))
+        merged_children.push(merge(virtual_child, dom_child, level++))
       } else { // no suitable dom_child found -> create one (recursively)
         merged_children.push(create(virtual_child))
       }
@@ -182,6 +183,8 @@ export function merge(virtual_node, dom_node) {
   for (let t in text_nodes) removeDomNode(text_nodes[t])
   for (let k in nodes_by_key) removeDomNode(nodes_by_key[k])
   for (let t in elements_by_tag) for (let e in elements_by_tag[t]) removeDomNode(elements_by_tag[t][e])
+  // call componentDidMount() on any mounted nodes
+  if (level === 0) conclude() // FIXME: returns above prevent this to be called
   return dom_node
 }
 
@@ -203,15 +206,37 @@ export class Component {
     this._children = null
   }
 
+  componentWillMount() {
+    console.log("componentWillMount")
+  }
+
+  componentDidMount() {
+    console.log("componentDidMount")
+  }
+
+  componentWillUnmount() {
+    console.log("componentWillUnmount")
+  }
+
+  componentWillUpdate() {
+    console.log("componentWillUpdate")
+  }
+
+  componentDidUpdate() {
+    console.log("componentDidUpdate")
+  }
+
   update() {
+    this.componentWillUpdate()
     let n = _queue.push(this)
     if (n === 1) requestAnimationFrame(function () {
-      for (let i = 0; i < _queue.length; i++) {
-        let component = _queue[i]
-        if (component._element)
+      let component
+      while (component = _queue.pop()) {
+        if (component._element) {
           merge(render(component), component._element)
+          component.componentDidUpdate()
+        }
       }
-      _queue = []
     })
   }
 

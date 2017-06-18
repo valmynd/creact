@@ -1,3 +1,6 @@
+const _svg_tags = new Set(["svg", "path", "g", "text", "rect"])
+let _mounted_queue = []
+
 /**
  * @typedef {string|Object} VirtualNode
  * @property {string|function} tag
@@ -5,7 +8,6 @@
  * @property {VirtualNode[]} [children]
  * @property {Component} [component]
  */
-
 
 /**
  * Render a Virtual DOM Node to a String
@@ -53,6 +55,14 @@ export function replaceDomNode(old_dom_node, new_dom_node) {
 }
 
 /**
+ * @param {string} tag
+ */
+export function createDomNode(tag) {
+  if (_svg_tags.has(tag)) return document.createElementNS("http://www.w3.org/2000/svg", tag)
+  return document.createElement(tag)
+}
+
+/**
  * @param {Node} dom_node
  */
 export function removeDomNode(dom_node) {
@@ -69,6 +79,7 @@ export function instantiate(virtual_node) {
   let component = new virtual_node.tag()
   component._attributes = virtual_node.attributes
   component._children = virtual_node.children
+  component.componentWillMount()
   return component
 }
 
@@ -86,9 +97,19 @@ export function render(component) {
  */
 export function link(dom_node, component) {
   if (dom_node._component) unlink(dom_node, dom_node._component)
-  if (component.componentWillMount) component.componentWillMount()
   dom_node._component = component
   component._element = dom_node
+  _mounted_queue.push(component) // call componentDidMount() only after merging has concluded
+}
+
+export function conclude() {
+  console.log("conclude", _mounted_queue.length)
+  requestAnimationFrame(function () {
+    let component
+    while (component = _mounted_queue.pop()) {
+      component.componentDidMount()
+    }
+  })
 }
 
 /**
@@ -96,7 +117,7 @@ export function link(dom_node, component) {
  * @param {Component} component
  */
 function unlink(dom_node, component) {
-  if (component.componentWillUnmount) component.componentWillUnmount()
+  component.componentWillUnmount()
   if (dom_node._component) delete dom_node._component
   if (component._element) delete component._element
 }
