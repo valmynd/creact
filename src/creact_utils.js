@@ -10,23 +10,19 @@ let _mounted_queue = []
  */
 
 /**
- * Render a Virtual DOM Node to a String
- * @param {VirtualNode} virtual_node
- * @returns {string}
+ * read http://jasonformat.com/wtf-is-jsx
+ * @param {string|function} tag
+ * @param {Object|null} attributes
+ * @param args
+ * @returns {VirtualNode}
  */
-export function toString(virtual_node) {
-  if (typeof virtual_node.tag === 'function')
-    virtual_node = render(instantiate(virtual_node))
-  let {tag, children, attributes} = virtual_node
-  let ret = "<" + tag
-  if (attributes) for (let key in attributes)
-    if (!key.startsWith("on")) ret += " " + key + '="' + attributes[key] + '"'
-  ret += ">"
-  if (children) for (let c of children)
-    if (typeof c === "string") ret += c
-    else ret += toString(c)
-  return ret + "</" + tag + ">"
+export function h(tag, attributes, ...args) {
+  let children = args.length > 0 ? [].concat(...args) : undefined
+  return {tag, attributes, children}
 }
+
+// make it available globally
+global.h = h
 
 /**
  * @param {Object|Array|null} one
@@ -103,7 +99,6 @@ export function link(dom_node, component) {
 }
 
 export function conclude() {
-  console.log("conclude", _mounted_queue.length)
   requestAnimationFrame(function () {
     let component
     while (component = _mounted_queue.pop()) {
