@@ -33,16 +33,19 @@ export const defaultVertexShader = `
 #version 300 es
 in vec4 color;
 in vec4 position;
+out vec4 iColor;
 void main() {
-   gl_Position = position;
+  iColor = position;
+  gl_Position = position;
 }
 `
 
 export const defaultFragmentShader = `
 #version 300 es
 precision mediump float;
+in vec4 iColor;
 out vec4 color;
 void main() {
-   color = vec4(1.0,1.0,1.0,1.0);
+  color = iColor;
 }
 `

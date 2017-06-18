@@ -13,9 +13,12 @@ export class Canvas extends Component {
     let positionBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
     let positions = [
-      0, 0,
+      0, 0, // begin first triangle
       0, 0.5,
-      0.9, 0,
+      0.9, 0, // end first triangle
+      0.4, 1,
+      0.1, 0.5,
+      1, 0
     ]
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
     // tell the attribute how to get data out of it
@@ -32,8 +35,7 @@ export class Canvas extends Component {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.useProgram(program)
-    //gl.bindVertexArray(vao)
-    gl.drawArrays(gl.TRIANGLES, offset, 3)
+    gl.drawArrays(gl.TRIANGLES, offset, positions.length / size)
   }
 
   render({width = 100, height = 100}, children = []) {
