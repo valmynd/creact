@@ -8,7 +8,6 @@ export class Canvas extends Component {
   }
 
   componentDidMount() {
-    console.log("hu", this._element, this._attributes)
     let scene = new THREE.Scene()
     let camera = new THREE.PerspectiveCamera(75,  this._element.clientWidth /  this._element.clientHeight, 0.1, 1000)
     let renderer = new THREE.WebGLRenderer({canvas: this._element})
@@ -20,7 +19,8 @@ export class Canvas extends Component {
     camera.position.z = 5
 
     let render = function () {
-      requestAnimationFrame(render)
+      //console.log(Math.random())
+      if(Math.random() > 0.01) requestAnimationFrame(render)
 
       cube.rotation.x += 0.1
       cube.rotation.y += 0.1
