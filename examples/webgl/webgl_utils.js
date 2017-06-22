@@ -35,7 +35,7 @@ in vec4 color;
 in vec4 position;
 out vec4 iColor;
 void main() {
-  iColor = position;
+  iColor = position * 0.5 + 0.5; // convert from clipspace (goes from -1.0 to +1.0) to colorspace (from 0.0 to 1.0)
   gl_Position = position;
 }
 `
