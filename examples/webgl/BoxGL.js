@@ -1,5 +1,5 @@
 import {Component} from '../../src/creact'
-import {compileShaders} from "./webgl_utils"
+import {compileShaders} from "./utils/webgl_utils"
 // https://webgl2fundamentals.org/webgl/lessons/webgl-fundamentals.html
 
 export class Canvas extends Component {
