@@ -26,15 +26,17 @@ export function create(virtual_node) {
 /**
  * Render a Virtual DOM Node to a String
  * @param {VirtualNode} virtual_node
+ * @param {boolean} [clean] (whether to have self-closing tags and certain attributes removed for some SVG Nodes)
  * @returns {string}
  */
-export function renderToString(virtual_node) {
+export function renderToString(virtual_node, clean = false) {
   while (typeof virtual_node.tag === 'function')
     virtual_node = render(instantiate(virtual_node))
-  let {exclude} = checkIfSVG(virtual_node)
+  let {exclude} = checkIfSVG(virtual_node, clean)
   let ret = "<" + virtual_node.tag
   for (let a in virtual_node.attributes)
     if (!a.startsWith("on") && !exclude.has(a)) ret += " " + a + '="' + virtual_node.attributes[a] + '"'
+  if (clean && virtual_node.children.length === 0) return ret + "/>" // would break comparability in tests
   ret += ">"
   for (let c of virtual_node.children)
     if (typeof c === "string") ret += c

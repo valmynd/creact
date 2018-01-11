@@ -1,6 +1,9 @@
 export const nsHTML = "http://www.w3.org/1999/xhtml"
 export const nsSVG = "http://www.w3.org/2000/svg"
 
+export const rectDefaults = {fill: "white", stroke: "black"}
+export const circleDefaults = {fill: "white", stroke: "black"}
+
 /**
  * @typedef {Object} SVGInfo
  * @property {boolean} isSVG // whether the tag (which must be a string!) belongs to common SVG Tags
@@ -15,9 +18,10 @@ const isSVG = {isSVG: true, exclude: new Set()}
  * Returns whether the VirtualNode qualifies as SVG and if so,
  * whether and which attribute-names to exclude from final output.
  * @param {VirtualNode} vn
+ * @param {boolean} [clean]
  * @returns {SVGInfo}
  */
-export function checkIfSVG(vn) {
+export function checkIfSVG(vn, clean = false) {
   let a, tag = vn.tag
   switch (tag) {
     case "text":
@@ -30,10 +34,10 @@ export function checkIfSVG(vn) {
       a.r = a.width / 2
       a.cx = a.x + a.r
       a.cy = a.y + a.r
-      return isSVGE
+      return clean ? isSVGE : isSVG
     case "ellipse":
       // maybe use previous centers and radii?
-      return isSVG
+      return clean ? isSVGE : isSVG
     // all the above must not have child nodes, but changing the virtual dom (here or anywhere else) would cause side-effects
     // -> actually, removing x, y, width and height may already cause side effects... (esp. for layout-algorithms)
     // -> maybe just leave them there?
@@ -41,7 +45,7 @@ export function checkIfSVG(vn) {
     case "g":
       a = vn.attributes
       if (a.x && a.y) a["transform"] = `translate(${a.x || 0},${a.y || 0})`
-      return isSVGE
+      return clean ? isSVGE : isSVG
   }
   return isNotSVG
 }
