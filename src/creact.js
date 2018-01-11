@@ -11,9 +11,9 @@ import {
  * @returns {VirtualNode}
  */
 export function h(tag, attributes, ...args) {
-  let children = args.length > 0 ? [].concat(...args) : undefined
-  return {tag, attributes, children}
+  return {tag, attributes: attributes || {}, children: [].concat(...args)}
 }
+global.h = h
 
 /**
  * Create a DOM Element that corresponds to a Virtual DOM Node (usually created via JSX)
@@ -195,6 +195,7 @@ export class Component {
     /** @private */
     this._children = null
     // lifecycle attributes: set to true during layout/merge false after layout/merge
+    // overall lifecycle: render() -> layout() -> merge()
     /** @private */
     this._layout_done = false
     /** @private */
@@ -212,10 +213,6 @@ export class Component {
     })
   }
 
-  layout() {
-    return false
-  }
-
   /**
    * Internal: Receives new properties
    * Returns whether the Component *should* update afterwards
@@ -228,6 +225,14 @@ export class Component {
     this._attributes = attributes
     this._children = children
     return shall_update
+  }
+
+  /**
+   *
+   * @return {boolean}
+   */
+  layout() {
+    return false
   }
 
   /**
