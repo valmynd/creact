@@ -1,9 +1,10 @@
-import {Box2D, Node2D, Tree2D} from "./layoutcomponent"
+import {Node2D, Tree2D} from "./layoutcomponents"
+import {Circle2D} from "./svgcomponents"
 
-export const example = <Tree2D x={0} y={0}>
+export const example = <Tree2D name="tree" x={100} y={100}>
   <Node2D name="exampleClass" width={10} height={10}>
     <Node2D name="exampleSubClass" width={10} height={10}>
-      <Box2D name="someBox" width={10} height={10}/>
+      <Circle2D name="someBox" width={10} height={10}/>
     </Node2D>
   </Node2D>
 </Tree2D>

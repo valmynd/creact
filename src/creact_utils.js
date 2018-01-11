@@ -1,3 +1,5 @@
+import {checkIfSVG} from "./svg_utils"
+
 /**
  * @typedef {string|Object} VirtualNode
  * @property {string|function} tag
@@ -6,23 +8,36 @@
  * @property {Component} [component]
  */
 
+/**
+ * read http://jasonformat.com/wtf-is-jsx
+ * @param {string|function} tag
+ * @param {Object|null} attributes
+ * @param {...VirtualNode} args
+ * @returns {VirtualNode}
+ */
+export function h(tag, attributes, ...args) {
+  return {tag, attributes: attributes || {}, children: [].concat(...args)}
+}
+
+global.h = h
 
 /**
  * Render a Virtual DOM Node to a String
  * @param {VirtualNode} virtual_node
  * @returns {string}
  */
-export function toString(virtual_node) {
-  if (typeof virtual_node.tag === 'function')
+export function renderToString(virtual_node) {
+  while (typeof virtual_node.tag === 'function')
     virtual_node = render(instantiate(virtual_node))
+  checkIfSVG(virtual_node) // may do adjustments
   let {tag, children, attributes} = virtual_node
   let ret = "<" + tag
-  if (attributes) for (let key in attributes)
+  for (let key in attributes)
     if (!key.startsWith("on")) ret += " " + key + '="' + attributes[key] + '"'
   ret += ">"
-  if (children) for (let c of children)
+  for (let c of children)
     if (typeof c === "string") ret += c
-    else ret += toString(c)
+    else ret += renderToString(c)
   return ret + "</" + tag + ">"
 }
 
@@ -77,7 +92,7 @@ export function instantiate(virtual_node) {
  * @returns {VirtualNode}
  */
 export function render(component) {
-  return component.render(component._attributes || {}, component._children || [])
+  return component.render(component._attributes, component._children)
 }
 
 /**

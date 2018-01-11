@@ -1,19 +1,8 @@
+import {checkIfSVG, nsHTML, nsSVG} from "./svg_utils"
 import {
   equals, instantiate, link, removeDomNode, removeListener, render, replaceDomNode,
   setListener
-} from "./creact_utils";
-
-/**
- * read http://jasonformat.com/wtf-is-jsx
- * @param {string|function} tag
- * @param {Object|null} attributes
- * @param args
- * @returns {VirtualNode}
- */
-export function h(tag, attributes, ...args) {
-  return {tag, attributes: attributes || {}, children: [].concat(...args)}
-}
-global.h = h
+} from "./creact_utils"
 
 /**
  * Create a DOM Element that corresponds to a Virtual DOM Node (usually created via JSX)
@@ -26,10 +15,8 @@ export function create(virtual_node) {
     component = instantiate(virtual_node)
     virtual_node = render(component)
   }
+  element = document.createElementNS(checkIfSVG(virtual_node) ? nsSVG : nsHTML, virtual_node.tag)
   let {tag, children, attributes} = virtual_node
-  if (tag === "svg" || tag === "path" || tag === "g" || tag === "text" || tag === "rect")
-    element = document.createElementNS("http://www.w3.org/2000/svg", tag)
-  else element = document.createElement(tag)
   if (attributes) for (let a in attributes)
     if (a.startsWith("on")) setListener(element, a.substring(2).toLowerCase(), attributes[a])
     else element.setAttribute(a, attributes[a])

@@ -1,11 +1,6 @@
 import test from "ava"
-import {
-  h,
-  create,
-  merge,
-  Component
-} from "../dist/creact";
+import {Component, create, merge} from "../dist/creact";
 
-test('h works correctly', t => {
-  t.deepEqual(h("div", {}), {tag: "div", attributes: {}, children: []})
+test('todo: more tests', t => {
+  t.is(1, 1)
 })

@@ -556,6 +556,7 @@ export const Placement = {TOP: 0, LEFT: 1, BOTTOM: 2, RIGHT: 3}
  * @returns {VTree2D}
  */
 export function layout(tree, neighborGap = 1, levelGap = 1, placeRoot = Placement.TOP, alignment = Alignment.CENTER) {
+  let offsetX = 0 // needs to be adjusted via the bounding box of the tree
   let t = new TreeLayout(tree, neighborGap, levelGap, placeRoot, alignment), p = t.positions
   let treeMinX = tree.attributes.x, treeMinY = tree.attributes.y, treeMaxX = -Infinity, treeMaxY = -Infinity
   for (let i = 0, len = p.length; i < len; i++) {
@@ -570,7 +571,7 @@ export function layout(tree, neighborGap = 1, levelGap = 1, placeRoot = Placemen
     if (nodeMaxX > treeMaxX) treeMaxX = nodeMaxX
     if (nodeMaxY > treeMaxY) treeMaxY = nodeMaxY
     node.attributes = { // update VNode2D attributes, width and height should stay the same
-      x: nodeMinX,
+      x: nodeMinX + offsetX,
       y: nodeMinY,
       ...node.attributes
     }
