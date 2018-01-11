@@ -1,6 +1,6 @@
+import {circleDefaults, rectDefaults} from "../svg_utils"
 import {Component} from "../creact"
 import {layout} from "./layout"
-import {Box2D} from "./svgcomponents"
 
 export function assert(condition) {
   if (!condition) throw new Error("AssertionError")
@@ -13,6 +13,20 @@ export class Node2D extends Component {
       <Box2D {...attributes}/>
       {children}
     </g>
+  }
+}
+
+export class Box2D extends Node2D {
+  render(attributes, children) {
+    assert(attributes.width != null && attributes.height != null, children == null)
+    return <rect {...rectDefaults} {...attributes}/>
+  }
+}
+
+export class Circle2D extends Node2D {
+  render(attributes, children) {
+    assert(attributes.width != null && attributes.height != null, children == null)
+    return <circle {...circleDefaults} {...attributes}/>
   }
 }
 
