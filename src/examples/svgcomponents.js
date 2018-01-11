@@ -12,14 +12,14 @@ const rectDefaults = {
  */
 export class Box2D extends Component {
   render(attributes, children) {
-    assert(attributes.width != null && attributes.height != null)
+    assert(attributes.width != null && attributes.height != null, children == null)
     return <rect {...attributes}>{children}</rect>
   }
 }
 
 export class Circle2D extends Box2D {
   render(attributes, children) {
-    assert(attributes.width != null && attributes.height != null)
+    assert(attributes.width != null && attributes.height != null, children == null)
     return <circle {...attributes}>{children}</circle>
   }
 }

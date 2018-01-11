@@ -7,14 +7,14 @@ import {instantiate, link, removeDomNode, removeListener, render, replaceDomNode
  * @returns {Element}
  */
 export function create(virtual_node) {
-  let element, frag, component
   while (typeof virtual_node.tag === 'function')
     virtual_node = render(instantiate(virtual_node))
-  element = document.createElementNS(checkIfSVG(virtual_node) ? nsSVG : nsHTML, virtual_node.tag)
+  let {isSVG, exclude} = checkIfSVG(virtual_node), element, frag, component
+  element = document.createElementNS(isSVG ? nsSVG : nsHTML, virtual_node.tag)
   frag = document.createDocumentFragment()
   for (let a in virtual_node.attributes)
     if (a.startsWith("on")) setListener(element, a.substring(2).toLowerCase(), virtual_node.attributes[a])
-    else element.setAttribute(a, virtual_node.attributes[a])
+    else if (!exclude.has(a)) element.setAttribute(a, virtual_node.attributes[a])
   for (let c of virtual_node.children)
     if (typeof c === "string") frag.appendChild(document.createTextNode(c))
     else if (c != null) frag.appendChild(create(c))
@@ -31,10 +31,10 @@ export function create(virtual_node) {
 export function renderToString(virtual_node) {
   while (typeof virtual_node.tag === 'function')
     virtual_node = render(instantiate(virtual_node))
-  checkIfSVG(virtual_node) // may do adjustments
+  let {exclude} = checkIfSVG(virtual_node)
   let ret = "<" + virtual_node.tag
   for (let a in virtual_node.attributes)
-    if (!a.startsWith("on")) ret += " " + a + '="' + virtual_node.attributes[a] + '"'
+    if (!a.startsWith("on") && !exclude.has(a)) ret += " " + a + '="' + virtual_node.attributes[a] + '"'
   ret += ">"
   for (let c of virtual_node.children)
     if (typeof c === "string") ret += c

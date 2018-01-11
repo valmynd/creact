@@ -1,5 +1,3 @@
-import {checkIfSVG} from "./svg_utils"
-
 /**
  * @typedef {string|Object} VirtualNode
  * @property {string|function} tag
