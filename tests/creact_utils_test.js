@@ -1,5 +1,6 @@
 import test from "ava"
-import {h, instantiate, render, renderToString} from "../dist/creact_utils"
+import {renderToString} from "../dist/creact"
+import {h, instantiate, render} from "../dist/creact_utils"
 import {example} from "../dist/examples/tree_example"
 
 test('h works correctly', t => {

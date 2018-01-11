@@ -22,26 +22,6 @@ export function h(tag, attributes, ...args) {
 global.h = h
 
 /**
- * Render a Virtual DOM Node to a String
- * @param {VirtualNode} virtual_node
- * @returns {string}
- */
-export function renderToString(virtual_node) {
-  while (typeof virtual_node.tag === 'function')
-    virtual_node = render(instantiate(virtual_node))
-  checkIfSVG(virtual_node) // may do adjustments
-  let {tag, children, attributes} = virtual_node
-  let ret = "<" + tag
-  for (let key in attributes)
-    if (!key.startsWith("on")) ret += " " + key + '="' + attributes[key] + '"'
-  ret += ">"
-  for (let c of children)
-    if (typeof c === "string") ret += c
-    else ret += renderToString(c)
-  return ret + "</" + tag + ">"
-}
-
-/**
  * @param {Node} old_dom_node
  * @param {Node} new_dom_node
  * @returns {Node}

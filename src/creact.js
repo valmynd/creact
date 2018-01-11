@@ -24,6 +24,25 @@ export function create(virtual_node) {
 }
 
 /**
+ * Render a Virtual DOM Node to a String
+ * @param {VirtualNode} virtual_node
+ * @returns {string}
+ */
+export function renderToString(virtual_node) {
+  while (typeof virtual_node.tag === 'function')
+    virtual_node = render(instantiate(virtual_node))
+  checkIfSVG(virtual_node) // may do adjustments
+  let ret = "<" + virtual_node.tag
+  for (let a in virtual_node.attributes)
+    if (!a.startsWith("on")) ret += " " + a + '="' + virtual_node.attributes[a] + '"'
+  ret += ">"
+  for (let c of virtual_node.children)
+    if (typeof c === "string") ret += c
+    else ret += renderToString(c)
+  return ret + "</" + virtual_node.tag + ">"
+}
+
+/**
  * Change a DOM Element to equal a Virtual DOM Node (usually created via JSX)
  * @param {VirtualNode} virtual_node
  * @param {Node|Element} dom_node

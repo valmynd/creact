@@ -1,9 +1,10 @@
 import test from "ava"
-import {Component, create, merge} from "../dist/creact"
+import {Component, create, renderToString} from "../dist/creact"
 import {example} from "../dist/examples/tree_example"
 
-test('todo: more tests', t => {
-  t.is(1, 1)
+test('renderToString do the same thing', t => {
+  t.true(create(example).outerHTML === renderToString(example))
+  t.true(renderToString(example) === create(example).outerHTML)
 })
 
-print("create:\n", create(example))
+console.log("compare:\n", create(example).outerHTML, "\n", renderToString(example))

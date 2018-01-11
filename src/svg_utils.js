@@ -14,6 +14,8 @@ function pop(obj, n) {
 
 /**
  * Some SVG Nodes must not have child nodes...
+ * Problem1: The Virtual DOM gets manipulated here
+ * Problem2: Child nodes aren't instantiated yet (tag-attributes often are not strings!)
  * @param {VirtualNode} vn
  * @param {VirtualNode[]} [descendants] (already collected)
  * @returns {VirtualNode[]}
