@@ -1,12 +1,6 @@
 import {
-  equals,
-  removeDomNode,
-  replaceDomNode,
-  instantiate,
-  link,
-  render,
-  setListener,
-  removeListener
+  equals, instantiate, link, removeDomNode, removeListener, render, replaceDomNode,
+  setListener
 } from "./creact_utils";
 
 /**
@@ -182,12 +176,17 @@ export function merge(virtual_node, dom_node) {
   return dom_node
 }
 
+/** merge strategy:
+ * - virtual nodes have a component(-constructor)
+ * - if that component is flagged "dirty", (re-)call its render method and diff it
+ * - if not, just let it stay as it is / continue with other children
+ * @type{Component[]}
+ */
+const _queue = []
 
-// merge strategy:
-// - virtual nodes have a component(-constructor)
-// - if that component is flagged "dirty", (re-)call its render method and diff it
-// - if not, just let it stay as it is / continue with other children
-let _queue = []
+/**
+ * Base Class for all Components
+ */
 export class Component {
   constructor() {
     // the sole purpose of storing dom_node, attributes and children is to be able to
@@ -201,14 +200,11 @@ export class Component {
   }
 
   update() {
-    let n = _queue.push(this)
-    if (n === 1) requestAnimationFrame(function () {
-      for (let i = 0; i < _queue.length; i++) {
-        let component = _queue[i]
-        if (component._element)
-          merge(render(component), component._element)
+    let c, n = _queue.push(this)
+    if (n === 1) requestAnimationFrame(() => {
+      while (c = _queue.shift()) {
+        if (c._element) merge(render(c), c._element)
       }
-      _queue = []
     })
   }
 
@@ -227,8 +223,8 @@ export class Component {
   }
 
   /**
-   * @param {null|Object} attributes
-   * @param {null|VirtualNode[]} children
+   * @param {Object} attributes
+   * @param {VirtualNode[]} children
    */
   render(attributes, children) {
     throw "NotImplementedError"

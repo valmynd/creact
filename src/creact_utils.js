@@ -77,7 +77,7 @@ export function instantiate(virtual_node) {
  * @returns {VirtualNode}
  */
 export function render(component) {
-  return component.render(component._attributes, component._children)
+  return component.render(component._attributes || {}, component._children || [])
 }
 
 /**
