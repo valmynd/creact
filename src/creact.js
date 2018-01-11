@@ -176,13 +176,10 @@ export function merge(virtual_node, dom_node) {
   return dom_node
 }
 
-/** merge strategy:
- * - virtual nodes have a component(-constructor)
- * - if that component is flagged "dirty", (re-)call its render method and diff it
- * - if not, just let it stay as it is / continue with other children
- * @type{Component[]}
- */
-const _queue = []
+/** @type{Component[]} */
+const _merge_queue = []
+/** @type{Component[]} */
+const _layout_queue = []
 
 /**
  * Base Class for all Components
@@ -197,15 +194,26 @@ export class Component {
     this._attributes = null
     /** @private */
     this._children = null
+    // lifecycle attributes: set to true during layout/merge false after layout/merge
+    /** @private */
+    this._layout_done = false
+    /** @private */
+    this._merge_done = false
+    /** @private */
+    this._bb = [[0, 0, 0], [0, 0, 0]]
   }
 
   update() {
-    let c, n = _queue.push(this)
+    let c, n = _merge_queue.push(this)
     if (n === 1) requestAnimationFrame(() => {
-      while (c = _queue.shift()) {
+      while (c = _merge_queue.shift()) {
         if (c._element) merge(render(c), c._element)
       }
     })
+  }
+
+  layout() {
+    return false
   }
 
   /**

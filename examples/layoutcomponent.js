@@ -16,12 +16,6 @@ const _merge_queue = []
  *
  */
 class TreeComponent extends Component {
-  constructor() {
-    super()
-    /** @private */
-    /** @private */
-    this.bb = [[0,0], [0,0]]
-  }
   update() {
     let c, n = _layout_queue.push(this)
     if (n === 1) requestAnimationFrame(() => {

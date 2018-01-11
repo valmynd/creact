@@ -7,21 +7,19 @@ const min = Math.min, max = Math.max
  * 2D Boxes: MIN for top left corner and MAX for bottom right corner
  * @typedef {Point[]} Box
  */
-/**
- * LayoutNodes have a bounding box.
- * When using LayoutNodes as inputs for layout algorithms, only the widths and
- * heights are calculated, previous position information is ignored.
- * When applying layout algorithms, the bounding boxes are updated in a way that
- * the width and height stays the same, but the position changes.
- * @typedef {Object} LayoutNode
- * @property {Box} bb
- */
 
 /**
- * TreeNodes are LayoutNodes that have references to child nodes.
- * Thus when applying the tree-layout algorithm, only the root node needs to be provided.
- * @typedef {LayoutNode} TreeNode
- * @property {TreeNode[]} children
+ * LayoutNodes have a bounding box:
+ * - When using LayoutNodes as inputs for layout algorithms, only the widths and
+ *   heights are calculated, previous position information is ignored.
+ * - When applying layout algorithms, the bounding boxes are updated in a way that
+ *   the width and height stays the same, but the position changes.
+ * Beside that, LayoutNodes have references to children and an indicator on
+ * whether the node was processed by the layout algorithm.
+ * @typedef {Component} LayoutNode
+ * @property {Box} _bb
+ * @property {LayoutNode[]} _children
+ * @property {boolean} _layout_done
  */
 
 /**
@@ -31,24 +29,28 @@ const min = Math.min, max = Math.max
  * @abstract
  */
 class LayoutAlgorithm {
-  // noinspection JSMethodCanBeStatic
   /**
-   * Override this method if you have different Tree designs!
-   * @param {LayoutNode} node
-   * @returns {number}
-   */
-  getNodeHeight(node) {
-    return node.bb[1][1] - node.bb[0][1]
-  }
-
-  // noinspection JSMethodCanBeStatic
-  /**
-   * Override this method if you have different Tree designs!
    * @param {LayoutNode} node
    * @returns {number}
    */
   getNodeWidth(node) {
-    return node.bb[1][0] - node.bb[0][0]
+    return node._bb[1][0] - node._bb[0][0]
+  }
+
+  /**
+   * @param {LayoutNode} node
+   * @returns {number}
+   */
+  getNodeHeight(node) {
+    return node._bb[1][1] - node._bb[0][1]
+  }
+
+  /**
+   * @param {LayoutNode} node
+   * @returns {LayoutNode[]}
+   */
+  getChildren(node) {
+    return node._children
   }
 }
 
@@ -82,20 +84,10 @@ class LayoutAlgorithm {
  * POSSIBILITY OF SUCH DAMAGE.
  */
 class TreeLayout extends LayoutAlgorithm {
-  // noinspection JSMethodCanBeStatic
-  /**
-   * Override this method if you have different Tree designs!
-   * @param {TreeNode} node
-   * @returns {TreeNode[]}
-   */
-  getChildren(node) {
-    return node.children
-  }
-
   /**
    * Override this method if you want to have more specific gaps between different node types
-   * @param {TreeNode} a
-   * @param {TreeNode} b
+   * @param {LayoutNode} a
+   * @param {LayoutNode} b
    * @return {number}
    */
   getGapBetweenNeighbors(a, b) {
@@ -119,8 +111,8 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} child
-   * @param {TreeNode} parent
+   * @param {LayoutNode} child
+   * @param {LayoutNode} parent
    * @return {boolean}
    */
   isChildOfParent(child, parent) {
@@ -128,8 +120,8 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
-   * @returns {TreeNode}
+   * @param {LayoutNode} node
+   * @returns {LayoutNode}
    */
   getFirstChild(node) {
     let c = this.getChildren(node)
@@ -137,8 +129,8 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
-   * @returns {TreeNode}
+   * @param {LayoutNode} node
+   * @returns {LayoutNode}
    */
   getLastChild(node) {
     let c = this.getChildren(node)
@@ -146,7 +138,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @return {boolean}
    */
   isLeaf(node) {
@@ -154,7 +146,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @param {boolean} returnWidth
    * @return {number}
    */
@@ -193,7 +185,7 @@ class TreeLayout extends LayoutAlgorithm {
    * When the root is located at the top or bottom the size of a level is the maximal height of the
    * nodes of that level. When the root is located at the left or right the size of a level is the
    * maximal width of the nodes of that level.
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @param {int} level
    */
   calcMaxWidthsOrHeights(node, level) {
@@ -206,7 +198,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @returns {number}
    */
   getMod(node) {
@@ -214,7 +206,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @param {number} d
    */
   setMod(node, d) {
@@ -222,23 +214,23 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
-   * @returns {TreeNode}
+   * @param {LayoutNode} node
+   * @returns {LayoutNode}
    */
   getThread(node) {
     return this.thread[node]
   }
 
   /**
-   * @param {TreeNode} node
-   * @param {TreeNode} thread
+   * @param {LayoutNode} node
+   * @param {LayoutNode} thread
    */
   setThread(node, thread) {
     this.thread[node] = thread
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @returns {number}
    */
   getPrelim(node) {
@@ -246,7 +238,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @param {number} d
    */
   setPrelim(node, d) {
@@ -254,7 +246,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @returns {number}
    */
   getChange(node) {
@@ -262,7 +254,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @param {number} d
    */
   setChange(node, d) {
@@ -270,7 +262,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @returns {number}
    */
   getShift(node) {
@@ -278,7 +270,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @param {number} d
    */
   setShift(node, d) {
@@ -288,8 +280,8 @@ class TreeLayout extends LayoutAlgorithm {
   /**
    * Returns the desired distance of the centers of both nodes
    * (depends on what getGapBetweenNeighbors() returns)
-   * @param {TreeNode} a
-   * @param {TreeNode} b
+   * @param {LayoutNode} a
+   * @param {LayoutNode} b
    * @returns {number} the distance between node a and b
    */
   getDistance(a, b) {
@@ -298,24 +290,24 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} v
-   * @return {TreeNode}
+   * @param {LayoutNode} v
+   * @return {LayoutNode}
    */
   nextLeft(v) {
     return this.isLeaf(v) ? this.getThread(v) : this.getFirstChild(v)
   }
 
   /**
-   * @param {TreeNode} v
-   * @return {TreeNode}
+   * @param {LayoutNode} v
+   * @return {LayoutNode}
    */
   nextRight(v) {
     return this.isLeaf(v) ? this.getThread(v) : this.getLastChild(v)
   }
 
   /**
-   * @param {TreeNode} node
-   * @param {TreeNode} parentNode (parent of node)
+   * @param {LayoutNode} node
+   * @param {LayoutNode} parentNode (parent of node)
    * @returns {int}
    */
   getNumber(node, parentNode) {
@@ -333,11 +325,11 @@ class TreeLayout extends LayoutAlgorithm {
   /**
    * Calculate the value that is used as first argument for moveTree()
    * Returns the 'greatest distinct ancestor' of vIMinus and its right neighbor
-   * @param {TreeNode} vIMinus
-   * @param {TreeNode} node
-   * @param {TreeNode} parent
-   * @param {TreeNode} leftMostSibling (a.k.a. 'defaultAncestor')
-   * @return {TreeNode}
+   * @param {LayoutNode} vIMinus
+   * @param {LayoutNode} node
+   * @param {LayoutNode} parent
+   * @param {LayoutNode} leftMostSibling (a.k.a. 'defaultAncestor')
+   * @return {LayoutNode}
    */
   wMinus(vIMinus, node, parent, leftMostSibling) {
     let leftNeighbor = this.leftNeighbor[node]
@@ -347,9 +339,9 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} wMinus
-   * @param {TreeNode} wPlus
-   * @param {TreeNode} parent
+   * @param {LayoutNode} wMinus
+   * @param {LayoutNode} wPlus
+   * @param {LayoutNode} parent
    * @param {number} shift
    */
   moveSubtree(wMinus, wPlus, parent, shift) {
@@ -362,11 +354,11 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} node
-   * @param {TreeNode} parent
-   * @param {TreeNode} leftMostSibling
-   * @param {TreeNode} [leftSibling]
-   * @return {TreeNode} what is now to be considered as leftMostSibling when apportion() is called again
+   * @param {LayoutNode} node
+   * @param {LayoutNode} parent
+   * @param {LayoutNode} leftMostSibling
+   * @param {LayoutNode} [leftSibling]
+   * @return {LayoutNode} what is now to be considered as leftMostSibling when apportion() is called again
    */
   apportion(node, parent, leftMostSibling, leftSibling) {
     if (!leftSibling) {
@@ -423,7 +415,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {TreeNode} v
+   * @param {LayoutNode} v
    */
   executeShifts(v) {
     let shift = 0, change = 0
@@ -437,8 +429,8 @@ class TreeLayout extends LayoutAlgorithm {
 
   /**
    * In difference to the original algorithm we also pass in the leftSibling (see apportion())
-   * @param {TreeNode} node
-   * @param {TreeNode} [leftSibling]
+   * @param {LayoutNode} node
+   * @param {LayoutNode} [leftSibling]
    */
   firstWalk(node, leftSibling) {
     if (this.isLeaf(node)) {
@@ -466,7 +458,7 @@ class TreeLayout extends LayoutAlgorithm {
 
   /**
    * In difference to the original algorithm we also pass in extra level information.
-   * @param {TreeNode} node
+   * @param {LayoutNode} node
    * @param {number} offset // (m?)
    * @param {int} level
    * @param {int} levelStart
@@ -505,7 +497,7 @@ class TreeLayout extends LayoutAlgorithm {
 
   /**
    * Creates a TreeLayout object (only to be used once)
-   * @param {TreeNode} root
+   * @param {LayoutNode} root
    * @param {number} gapBetweenNeighbors
    * @param {number} gapBetweenLevels
    * @param {Placement} rootPlacement
@@ -550,7 +542,7 @@ export const Placement = {TOP: 0, LEFT: 1, BOTTOM: 2, RIGHT: 3}
  * Applies Compact Tree Layout Algorithm
  * Updates the bounding boxes of the tree nodes
  * Returns the bounding box of the entire tree
- * @param {TreeNode} root
+ * @param {LayoutNode} root
  * @param {number} [neighborGap] how much space should be between different neighbors
  * @param {number} [levelGap] how much space should be between different levels
  * @param {Placement} [placeRoot] where to place the root node within the bounds of the entire tree
@@ -558,14 +550,18 @@ export const Placement = {TOP: 0, LEFT: 1, BOTTOM: 2, RIGHT: 3}
  * @return {Box}
  */
 export function layout(root, neighborGap = 1, levelGap = 1, placeRoot = Placement.TOP, alignment = Alignment.CENTER) {
-  let t = new TreeLayout(root, neighborGap, levelGap, placeRoot, alignment)
+  let t = new TreeLayout(root, neighborGap, levelGap, placeRoot, alignment), p = t.positions
   let treeMinX = +Infinity, treeMinY = +Infinity, treeMaxX = -Infinity, treeMaxY = -Infinity
-  for (let i = 0, len = t.positions.length; i < len; i++) {
-    let [node, xcenter, ycenter] = t.positions[i]
+  for (let i = 0, len = p.length; i < len; i++) {
+    /** @type{Component} */
+    let node = p[i][0]
+    let cx = p[i][1]
+    let cy = p[i][2]
     let w = t.getNodeWidth(node) / 2
     let h = t.getNodeHeight(node) / 2
-    let nodeMinX = xcenter - w, nodeMinY = ycenter - h, nodeMaxX = xcenter + w, nodeMaxY = ycenter + h
-    node.bb = [[nodeMinX, nodeMinY], [nodeMaxX, nodeMaxY]]
+    let nodeMinX = cx - w, nodeMinY = cy - h, nodeMaxX = cx + w, nodeMaxY = cy + h
+    node._bb = [[nodeMinX, nodeMinY], [nodeMaxX, nodeMaxY]]
+    node._layout_done = true
     if (nodeMinX < treeMinX) treeMinX = nodeMinX
     if (nodeMinY < treeMinY) treeMinY = nodeMinY
     if (nodeMaxX > treeMaxX) treeMaxX = nodeMaxX
