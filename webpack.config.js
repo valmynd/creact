@@ -2,7 +2,7 @@ var path = require('path');
 
 module.exports = {
   entry: {
-    'app': './examples/webgl/example.js'
+    'app': './src/creact.js'
   },
   output: {
     path: __dirname + '/dist',
