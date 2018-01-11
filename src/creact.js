@@ -1,8 +1,5 @@
 import {checkIfSVG, nsHTML, nsSVG} from "./svg_utils"
-import {
-  equals, instantiate, link, removeDomNode, removeListener, render, replaceDomNode,
-  setListener
-} from "./creact_utils"
+import {instantiate, link, removeDomNode, removeListener, render, replaceDomNode, setListener} from "./creact_utils"
 
 /**
  * Create a DOM Element that corresponds to a Virtual DOM Node (usually created via JSX)
@@ -10,24 +7,18 @@ import {
  * @returns {Element}
  */
 export function create(virtual_node) {
-  let element, component
-  if (typeof virtual_node.tag === 'function') {
-    component = instantiate(virtual_node)
-    virtual_node = render(component)
-  }
+  let element, frag, component
+  while (typeof virtual_node.tag === 'function')
+    virtual_node = render(instantiate(virtual_node))
   element = document.createElementNS(checkIfSVG(virtual_node) ? nsSVG : nsHTML, virtual_node.tag)
-  let {tag, children, attributes} = virtual_node
-  if (attributes) for (let a in attributes)
-    if (a.startsWith("on")) setListener(element, a.substring(2).toLowerCase(), attributes[a])
-    else element.setAttribute(a, attributes[a])
-  if (children) {
-    let frag = document.createDocumentFragment()
-    for (let i = 0, nChildren = children.length; i < nChildren; i++) {
-      if (typeof children[i] === "string") frag.appendChild(document.createTextNode(children[i]))
-      else if (children[i] != null) frag.appendChild(create(children[i]))
-    }
-    element.appendChild(frag)
-  }
+  frag = document.createDocumentFragment()
+  for (let a in virtual_node.attributes)
+    if (a.startsWith("on")) setListener(element, a.substring(2).toLowerCase(), virtual_node.attributes[a])
+    else element.setAttribute(a, virtual_node.attributes[a])
+  for (let c of virtual_node.children)
+    if (typeof c === "string") frag.appendChild(document.createTextNode(c))
+    else if (c != null) frag.appendChild(create(c))
+  element.appendChild(frag)
   if (component) link(element, component)
   return element
 }
@@ -200,7 +191,7 @@ export class Component {
    * @returns {boolean}
    */
   setProperties(attributes, children) {
-    let shall_update = !equals(attributes, this._attributes) || !equals(children, this._children)
+    let shall_update = false//!equals(attributes, this._attributes) || !equals(children, this._children)
     this._attributes = attributes
     this._children = children
     return shall_update

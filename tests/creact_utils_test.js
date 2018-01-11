@@ -1,5 +1,5 @@
 import test from "ava"
-import {h, equals, instantiate, render, renderToString} from "../dist/creact_utils"
+import {h, instantiate, render, renderToString} from "../dist/creact_utils"
 import {example} from "../dist/examples/tree_example"
 
 test('h works correctly', t => {
@@ -12,4 +12,4 @@ let c = instantiate(example)
 let vn = render(c)
 //console.log("render:\n", JSON.stringify(vn))
 let str = renderToString(vn)
-console.log("str:\n", str)
+print("str:\n", str)

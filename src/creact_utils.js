@@ -42,20 +42,6 @@ export function renderToString(virtual_node) {
 }
 
 /**
- * @param {Object|Array|null} one
- * @param {Object|Array|null} other
- * @returns {boolean}
- */
-export function equals(one, other) {
-  if (!one) return !other
-  if (one.length !== other.length) return false
-  for (let a in one)
-    if (one[a] !== other[a])
-      return false
-  return true
-}
-
-/**
  * @param {Node} old_dom_node
  * @param {Node} new_dom_node
  * @returns {Node}
