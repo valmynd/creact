@@ -9,17 +9,23 @@ const min = Math.min, max = Math.max
  */
 
 /**
- * LayoutNodes have a bounding box:
- * - When using LayoutNodes as inputs for layout algorithms, only the widths and
- *   heights are calculated, previous position information is ignored.
- * - When applying layout algorithms, the bounding boxes are updated in a way that
- *   the width and height stays the same, but the position changes.
+ * VirtualNodes that should have width and height among the attributes.
+ * When applying layout algorithms, attributes should updated in a way that
+ * the width and height stays the same and x and y coordinates are added.
  * Beside that, LayoutNodes have references to children and an indicator on
  * whether the node was processed by the layout algorithm.
- * @typedef {Component} LayoutNode
- * @property {Box} _bb
- * @property {LayoutNode[]} _children
- * @property {boolean} _layout_done
+ * @typedef {VirtualNode} VNode2D
+ * @property {{width:number,height:number}} attributes
+ * @property {VNode2D[]} children
+ */
+
+/**
+ * VirtualNodes that should have with x and y among the attributes.
+ * When applying layout algorithms, width and height should be added to the attributes,
+ * while x and y should stay the same! (...make that configurable maybe)
+ * @typedef {VirtualNode} VTree2D
+ * @property {{x:number,y:number}} attributes
+ * @property {VNode2D[]} children
  */
 
 /**
@@ -30,27 +36,27 @@ const min = Math.min, max = Math.max
  */
 class LayoutAlgorithm {
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @returns {number}
    */
   getNodeWidth(node) {
-    return node._bb[1][0] - node._bb[0][0]
+    return node.attributes.width
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @returns {number}
    */
   getNodeHeight(node) {
-    return node._bb[1][1] - node._bb[0][1]
+    return node.attributes.height
   }
 
   /**
-   * @param {LayoutNode} node
-   * @returns {LayoutNode[]}
+   * @param {VNode2D} node
+   * @returns {VNode2D[]}
    */
   getChildren(node) {
-    return node._children
+    return node.children
   }
 }
 
@@ -86,8 +92,8 @@ class LayoutAlgorithm {
 class TreeLayout extends LayoutAlgorithm {
   /**
    * Override this method if you want to have more specific gaps between different node types
-   * @param {LayoutNode} a
-   * @param {LayoutNode} b
+   * @param {VNode2D} a
+   * @param {VNode2D} b
    * @return {number}
    */
   getGapBetweenNeighbors(a, b) {
@@ -111,8 +117,8 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} child
-   * @param {LayoutNode} parent
+   * @param {VNode2D} child
+   * @param {VNode2D} parent
    * @return {boolean}
    */
   isChildOfParent(child, parent) {
@@ -120,8 +126,8 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
-   * @returns {LayoutNode}
+   * @param {VNode2D} node
+   * @returns {VNode2D}
    */
   getFirstChild(node) {
     let c = this.getChildren(node)
@@ -129,8 +135,8 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
-   * @returns {LayoutNode}
+   * @param {VNode2D} node
+   * @returns {VNode2D}
    */
   getLastChild(node) {
     let c = this.getChildren(node)
@@ -138,7 +144,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @return {boolean}
    */
   isLeaf(node) {
@@ -146,7 +152,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @param {boolean} returnWidth
    * @return {number}
    */
@@ -185,7 +191,7 @@ class TreeLayout extends LayoutAlgorithm {
    * When the root is located at the top or bottom the size of a level is the maximal height of the
    * nodes of that level. When the root is located at the left or right the size of a level is the
    * maximal width of the nodes of that level.
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @param {int} level
    */
   calcMaxWidthsOrHeights(node, level) {
@@ -198,7 +204,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @returns {number}
    */
   getMod(node) {
@@ -206,7 +212,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @param {number} d
    */
   setMod(node, d) {
@@ -214,23 +220,23 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
-   * @returns {LayoutNode}
+   * @param {VNode2D} node
+   * @returns {VNode2D}
    */
   getThread(node) {
     return this.thread[node]
   }
 
   /**
-   * @param {LayoutNode} node
-   * @param {LayoutNode} thread
+   * @param {VNode2D} node
+   * @param {VNode2D} thread
    */
   setThread(node, thread) {
     this.thread[node] = thread
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @returns {number}
    */
   getPrelim(node) {
@@ -238,7 +244,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @param {number} d
    */
   setPrelim(node, d) {
@@ -246,7 +252,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @returns {number}
    */
   getChange(node) {
@@ -254,7 +260,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @param {number} d
    */
   setChange(node, d) {
@@ -262,7 +268,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @returns {number}
    */
   getShift(node) {
@@ -270,7 +276,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @param {number} d
    */
   setShift(node, d) {
@@ -280,8 +286,8 @@ class TreeLayout extends LayoutAlgorithm {
   /**
    * Returns the desired distance of the centers of both nodes
    * (depends on what getGapBetweenNeighbors() returns)
-   * @param {LayoutNode} a
-   * @param {LayoutNode} b
+   * @param {VNode2D} a
+   * @param {VNode2D} b
    * @returns {number} the distance between node a and b
    */
   getDistance(a, b) {
@@ -290,24 +296,24 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} v
-   * @return {LayoutNode}
+   * @param {VNode2D} v
+   * @return {VNode2D}
    */
   nextLeft(v) {
     return this.isLeaf(v) ? this.getThread(v) : this.getFirstChild(v)
   }
 
   /**
-   * @param {LayoutNode} v
-   * @return {LayoutNode}
+   * @param {VNode2D} v
+   * @return {VNode2D}
    */
   nextRight(v) {
     return this.isLeaf(v) ? this.getThread(v) : this.getLastChild(v)
   }
 
   /**
-   * @param {LayoutNode} node
-   * @param {LayoutNode} parentNode (parent of node)
+   * @param {VNode2D} node
+   * @param {VNode2D} parentNode (parent of node)
    * @returns {int}
    */
   getNumber(node, parentNode) {
@@ -325,11 +331,11 @@ class TreeLayout extends LayoutAlgorithm {
   /**
    * Calculate the value that is used as first argument for moveTree()
    * Returns the 'greatest distinct ancestor' of vIMinus and its right neighbor
-   * @param {LayoutNode} vIMinus
-   * @param {LayoutNode} node
-   * @param {LayoutNode} parent
-   * @param {LayoutNode} leftMostSibling (a.k.a. 'defaultAncestor')
-   * @return {LayoutNode}
+   * @param {VNode2D} vIMinus
+   * @param {VNode2D} node
+   * @param {VNode2D} parent
+   * @param {VNode2D} leftMostSibling (a.k.a. 'defaultAncestor')
+   * @return {VNode2D}
    */
   wMinus(vIMinus, node, parent, leftMostSibling) {
     let leftNeighbor = this.leftNeighbor[node]
@@ -339,9 +345,9 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} wMinus
-   * @param {LayoutNode} wPlus
-   * @param {LayoutNode} parent
+   * @param {VNode2D} wMinus
+   * @param {VNode2D} wPlus
+   * @param {VNode2D} parent
    * @param {number} shift
    */
   moveSubtree(wMinus, wPlus, parent, shift) {
@@ -354,11 +360,11 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} node
-   * @param {LayoutNode} parent
-   * @param {LayoutNode} leftMostSibling
-   * @param {LayoutNode} [leftSibling]
-   * @return {LayoutNode} what is now to be considered as leftMostSibling when apportion() is called again
+   * @param {VNode2D} node
+   * @param {VNode2D} parent
+   * @param {VNode2D} leftMostSibling
+   * @param {VNode2D} [leftSibling]
+   * @return {VNode2D} what is now to be considered as leftMostSibling when apportion() is called again
    */
   apportion(node, parent, leftMostSibling, leftSibling) {
     if (!leftSibling) {
@@ -415,7 +421,7 @@ class TreeLayout extends LayoutAlgorithm {
   }
 
   /**
-   * @param {LayoutNode} v
+   * @param {VNode2D} v
    */
   executeShifts(v) {
     let shift = 0, change = 0
@@ -429,8 +435,8 @@ class TreeLayout extends LayoutAlgorithm {
 
   /**
    * In difference to the original algorithm we also pass in the leftSibling (see apportion())
-   * @param {LayoutNode} node
-   * @param {LayoutNode} [leftSibling]
+   * @param {VNode2D} node
+   * @param {VNode2D} [leftSibling]
    */
   firstWalk(node, leftSibling) {
     if (this.isLeaf(node)) {
@@ -458,7 +464,7 @@ class TreeLayout extends LayoutAlgorithm {
 
   /**
    * In difference to the original algorithm we also pass in extra level information.
-   * @param {LayoutNode} node
+   * @param {VNode2D} node
    * @param {number} offset // (m?)
    * @param {int} level
    * @param {int} levelStart
@@ -497,13 +503,13 @@ class TreeLayout extends LayoutAlgorithm {
 
   /**
    * Creates a TreeLayout object (only to be used once)
-   * @param {LayoutNode} root
+   * @param {VTree2D|VNode2D} tree
    * @param {number} gapBetweenNeighbors
    * @param {number} gapBetweenLevels
    * @param {Placement} rootPlacement
    * @param {Alignment} alignment
    */
-  constructor(root, gapBetweenNeighbors, gapBetweenLevels, rootPlacement, alignment) {
+  constructor(tree, gapBetweenNeighbors, gapBetweenLevels, rootPlacement, alignment) {
     super()
     this.alignment = alignment
     this.rootPlacement = rootPlacement
@@ -521,9 +527,9 @@ class TreeLayout extends LayoutAlgorithm {
     this.maxSizePerLevel = [] // max width or hight depending on inXAxis()/inYAxis()
     this.positions = [] // the results are written into this array: triples with node, relative x, relative y
     // perform walks (the class is meant to be instantiatet once per call of layout() only)
-    this.firstWalk(root)
-    this.calcMaxWidthsOrHeights(root, 0)
-    this.secondWalk(root, -this.getPrelim(root), 0, 0)
+    this.firstWalk(tree)
+    this.calcMaxWidthsOrHeights(tree, 0)
+    this.secondWalk(tree, -this.getPrelim(tree), 0, 0)
   }
 }
 
@@ -541,31 +547,38 @@ export const Placement = {TOP: 0, LEFT: 1, BOTTOM: 2, RIGHT: 3}
 /**
  * Applies Compact Tree Layout Algorithm
  * Updates the bounding boxes of the tree nodes
- * Returns the bounding box of the entire tree
- * @param {LayoutNode} root
+ * Updates the bounding box of the tree
+ * @param {VTree2D} tree
  * @param {number} [neighborGap] how much space should be between different neighbors
  * @param {number} [levelGap] how much space should be between different levels
  * @param {Placement} [placeRoot] where to place the root node within the bounds of the entire tree
  * @param {Alignment} [alignment] how to align nodes within a level when there is space left and right
- * @return {Box}
+ * @returns {VTree2D}
  */
-export function layout(root, neighborGap = 1, levelGap = 1, placeRoot = Placement.TOP, alignment = Alignment.CENTER) {
-  let t = new TreeLayout(root, neighborGap, levelGap, placeRoot, alignment), p = t.positions
-  let treeMinX = +Infinity, treeMinY = +Infinity, treeMaxX = -Infinity, treeMaxY = -Infinity
+export function layout(tree, neighborGap = 1, levelGap = 1, placeRoot = Placement.TOP, alignment = Alignment.CENTER) {
+  let t = new TreeLayout(tree, neighborGap, levelGap, placeRoot, alignment), p = t.positions
+  let treeMinX = tree.attributes.x, treeMinY = tree.attributes.y, treeMaxX = -Infinity, treeMaxY = -Infinity
   for (let i = 0, len = p.length; i < len; i++) {
-    /** @type{Component} */
     let node = p[i][0]
     let cx = p[i][1]
     let cy = p[i][2]
     let w = t.getNodeWidth(node) / 2
     let h = t.getNodeHeight(node) / 2
     let nodeMinX = cx - w, nodeMinY = cy - h, nodeMaxX = cx + w, nodeMaxY = cy + h
-    node._bb = [[nodeMinX, nodeMinY], [nodeMaxX, nodeMaxY]]
-    node._layout_done = true
     if (nodeMinX < treeMinX) treeMinX = nodeMinX
     if (nodeMinY < treeMinY) treeMinY = nodeMinY
     if (nodeMaxX > treeMaxX) treeMaxX = nodeMaxX
     if (nodeMaxY > treeMaxY) treeMaxY = nodeMaxY
+    node.attributes = { // update VNode2D attributes, width and height should stay the same
+      x: nodeMinX,
+      y: nodeMinY,
+      ...node.attributes
+    }
   }
-  return [[treeMinX, treeMinY], [treeMaxX, treeMaxY]]
+  tree.attributes = { // update VTree2D attributes, x and y should stay the same
+    width: treeMaxX - treeMinX,
+    height: treeMaxY - treeMinY,
+    ...tree.attributes
+  }
+  return tree
 }

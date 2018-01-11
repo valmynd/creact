@@ -176,10 +176,10 @@ export function merge(virtual_node, dom_node) {
   return dom_node
 }
 
-/** @type{Component[]} */
-const _merge_queue = []
-/** @type{Component[]} */
-const _layout_queue = []
+/**
+ * @type{Component[]}
+ */
+const _queue = []
 
 /**
  * Base Class for all Components
@@ -194,20 +194,12 @@ export class Component {
     this._attributes = null
     /** @private */
     this._children = null
-    // lifecycle attributes: set to true during layout/merge false after layout/merge
-    // overall lifecycle: render() -> layout() -> merge()
-    /** @private */
-    this._layout_done = false
-    /** @private */
-    this._merge_done = false
-    /** @private */
-    this._bb = [[0, 0, 0], [0, 0, 0]]
   }
 
   update() {
-    let c, n = _merge_queue.push(this)
+    let c, n = _queue.push(this)
     if (n === 1) requestAnimationFrame(() => {
-      while (c = _merge_queue.shift()) {
+      while (c = _queue.shift()) {
         if (c._element) merge(render(c), c._element)
       }
     })
@@ -225,14 +217,6 @@ export class Component {
     this._attributes = attributes
     this._children = children
     return shall_update
-  }
-
-  /**
-   *
-   * @return {boolean}
-   */
-  layout() {
-    return false
   }
 
   /**
