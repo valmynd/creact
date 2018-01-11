@@ -15,7 +15,9 @@ let out = {
     "attributes": {"x": -5, "y": 1, "name": "exampleClass", "width": 10, "height": 10},
     "children": [{
       "attributes": {"x": -5, "y": 12, "name": "exampleSubClass", "width": 10, "height": 10},
-      "children": [{"attributes": {"x": -5, "y": 23, "name": "someBox", "width": 10, "height": 10}, "children": []}]
+      "children": [{
+        "attributes": {"x": -5, "y": 23, "name": "someBox", "width": 10, "height": 10},
+        "children": []}]
     }]
   }]
 }

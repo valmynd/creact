@@ -62,7 +62,7 @@ class LayoutAlgorithm {
 
 /**
  * Actual implementation of the tree layout algorithm.
- * Startet as a Port from Java to ES6 (see http://treelayout.sourceforge.net/)
+ * Started as a Port from Java to ES6 (see http://treelayout.sourceforge.net/)
  * For the Java Code see License below:
  * [The "BSD license"]
  * Copyright (c) 2011, abego Software GmbH, Germany (http://www.abego.org)
