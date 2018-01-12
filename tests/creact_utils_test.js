@@ -1,7 +1,7 @@
 import test from "ava"
-import {renderToString} from "../dist/creact"
-import {h, instantiate, render} from "../dist/creact_utils"
-import {example} from "../dist/examples/tree_example"
+import {renderToString} from "../src/creact"
+import {h, instantiate, render} from "../src/creact_utils"
+import {example} from "../src/examples/tree_example"
 
 test('h works correctly', t => {
   t.deepEqual(h("div", {}), {tag: "div", attributes: {}, children: []})

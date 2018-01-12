@@ -4,15 +4,16 @@
   "description": "Minimalist React Implementation",
   "main": "dist/creact.js",
   "scripts": {
-    "test": "npm run build && ava",
-    "coverage": "npm run build && nyc ava",
+    "test": "ava",
+    "coverage": "nyc ava",
     "report-coverage": "npm run coverage && nyc report --reporter=lcov | codecov",
-    "build": "babel src --out-dir dist",
-    "bundle": "rollup src/examples/kdtree/example.js --o dist/bundle.js --f iife"
+    "bundle": "webpack"
   },
   "ava": {
+    "babel": "inherit",
     "files": "tests/*.js",
     "require": [
+      "babel-register",
       "./tests/helpers/setup-test-env.js"
     ]
   },
@@ -53,12 +54,13 @@
   },
   "devDependencies": {
     "ava": "^0.24.0",
-    "babel-cli": "^6.26.0",
+    "babel-loader": "^7.1.2",
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-preset-modern-browsers": "^10.0.1",
     "browser-env": "^3.2.4",
     "codecov": "^3.0.0",
-    "nyc": "^11.4.1"
+    "nyc": "^11.4.1",
+    "webpack": "^3.10.0"
   },
   "dependencies": {}
 }
