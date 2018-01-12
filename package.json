@@ -7,7 +7,8 @@
     "test": "npm run build && ava",
     "coverage": "npm run build && nyc ava",
     "report-coverage": "npm run coverage && nyc report --reporter=lcov | codecov",
-    "build": "babel src --out-dir dist"
+    "build": "babel src --out-dir dist",
+    "bundle": "rollup src/examples/kdtree/example.js --o dist/bundle.js --f iife"
   },
   "ava": {
     "files": "tests/*.js",
