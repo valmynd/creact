@@ -39,9 +39,34 @@ export function checkIfSVG(vn) {
       return isSVGE
     case "svg":
     case "g":
-      a = vn.attributes
-      if (a.x && a.y) a["transform"] = `translate(${a.x || 0},${a.y || 0})` // maybe a source of side-effects?
+      translate(vn)
       return isSVGE
   }
   return isNotSVG
+}
+
+/**
+ * apply translate (using x and y from the attributes)
+ * @param {VirtualNode} vn
+ * @param [trnsf]
+ * @param [regex]
+ */
+function translate(vn, trnsf = "translate", regex = /translate[^)]*./) {
+  let a = vn.attributes, x = a.x, y = a.y, transform = a.transform
+  if (!x && !y) {
+    if (!transform) return
+    transform = transform.replace(regex, "").trim()
+    if (!transform.length) {
+      delete a["transform"]
+      return
+    }
+  } else {
+    let translate = trnsf + "(" + (x || 0) + "," + (y || 0) + ")"
+    if (transform && transform.includes(trnsf)) {
+      transform = transform.replace(regex, translate)
+    } else {
+      transform = (transform && transform.length) ? (transform + " " + translate) : translate
+    }
+  }
+  a["transform"] = transform
 }
