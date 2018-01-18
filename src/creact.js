@@ -1,5 +1,6 @@
 import {checkIfSVG, nsHTML, nsSVG} from "./svg_utils"
 import {instantiate, link, removeDomNode, removeListener, render, replaceDomNode, setListener} from "./creact_utils"
+import {deepEqual} from "./deep_equal"
 
 /**
  * Create a DOM Element that corresponds to a Virtual DOM Node (usually created via JSX)
@@ -7,7 +8,7 @@ import {instantiate, link, removeDomNode, removeListener, render, replaceDomNode
  * @returns {Element}
  */
 export function create(virtual_node) {
-  while (typeof virtual_node.tag === 'function')
+  while (typeof virtual_node.tag !== "string")
     virtual_node = render(instantiate(virtual_node))
   let {isSVG, exclude} = checkIfSVG(virtual_node), element, frag, component
   element = document.createElementNS(isSVG ? nsSVG : nsHTML, virtual_node.tag)
@@ -30,12 +31,12 @@ export function create(virtual_node) {
  * @returns {string}
  */
 export function renderToString(virtual_node, clean = false) {
-  while (typeof virtual_node.tag === 'function')
+  while (typeof virtual_node.tag !== "string")
     virtual_node = render(instantiate(virtual_node))
   let {exclude} = checkIfSVG(virtual_node)
   let ret = "<" + virtual_node.tag
   for (let a in virtual_node.attributes)
-    if (!a.startsWith("on") && !exclude.has(a)) ret += " " + a + '="' + virtual_node.attributes[a] + '"'
+    if (!a.startsWith("on") && !exclude.has(a)) ret += ` ${a}="${virtual_node.attributes[a]}"`
   if (clean && virtual_node.children.length === 0) return ret + "/>" // would break comparability in tests
   ret += ">"
   for (let c of virtual_node.children)
@@ -48,9 +49,10 @@ export function renderToString(virtual_node, clean = false) {
  * Change a DOM Element to equal a Virtual DOM Node (usually created via JSX)
  * @param {VirtualNode} virtual_node
  * @param {Node|Element} dom_node
+ * @param {boolean} [force_deep] (whether to bother checking if a component can be recycled)
  * @returns {Node|Element} (the mutated dom_node)
  */
-export function merge(virtual_node, dom_node) {
+export function merge(virtual_node, dom_node, force_deep = false) {
   if (virtual_node == null) {
     console.log("NULL", dom_node)
     return
@@ -63,8 +65,7 @@ export function merge(virtual_node, dom_node) {
       return replaceDomNode(dom_node, document.createTextNode(virtual_node))
     }
   }
-  // handle situations where dom_node._component.constructor !== virtual_node.tag
-  if (typeof virtual_node.tag === "function") {
+  while (typeof virtual_node.tag !== "string") {
     let component = dom_node._component
     if (!component || component.constructor !== virtual_node.tag) {
       // NOTE: if for example, component.render() returns <body> and dom_node is <body>, it should NOT
@@ -73,8 +74,11 @@ export function merge(virtual_node, dom_node) {
       virtual_node = render(component)
       link(dom_node, component)
     } else {
-      let shall_update = component.setProperties(virtual_node.attributes, virtual_node.children)
-      if (!shall_update) return dom_node // no further merging needed
+      force_deep = force_deep || !deepEqual(virtual_node.children, component._children) ||
+        !deepEqual(virtual_node.attributes, component._attributes)
+      component._attributes = virtual_node.attributes
+      component._children = virtual_node.children
+      if (!force_deep) return dom_node // no further merging needed
       else virtual_node = render(component)
     }
   }
@@ -108,7 +112,7 @@ export function merge(virtual_node, dom_node) {
   for (let e in event_names) removeListener(dom_node, e)
   // handle changes on children
   // 0) put nodes with the keyword "key" in a map, and put rest in appropriate arrays/maps
-  let nodes_by_key = {}, elements_by_tag = {}, text_nodes = []
+  let nodes_by_key = {}, nodes_by_tag = {}, text_nodes = []
   for (let i = 0, n = dom_node.childNodes.length; i < n; i++) {
     let node = dom_node.childNodes[i]
     switch (node.nodeType) {
@@ -118,9 +122,9 @@ export function merge(virtual_node, dom_node) {
           nodes_by_key[key] = node
         } else { // exclude keyed children from the other maps to prevent them to be used multiple times
           let tag = node.nodeName.toLowerCase(),
-            array = elements_by_tag[tag]
+            array = nodes_by_tag[tag]
           if (array) array.push(node)
-          else elements_by_tag[tag] = [node]
+          else nodes_by_tag[tag] = [node]
         }
         break
       case 3: // Node.TEXT_NODE
@@ -138,23 +142,19 @@ export function merge(virtual_node, dom_node) {
         if (!dom_child) dom_child = document.createTextNode(virtual_child)
       } else {
         // try to use matching keyed-nodes
-        let key = virtual_child.attributes ? virtual_child.attributes["key"] : null
-        if (key !== null) dom_child = nodes_by_key[key]
-        if (dom_child) {
+        let key = virtual_child.attributes["key"]
+        if (key) {
+          dom_child = nodes_by_key[key]
           delete nodes_by_key[key]
         } else {
-          let tag = virtual_child.tag
-          if (typeof tag === "function") {
-            let tmp_component = instantiate(virtual_child),
-              tmp_virtual_node = render(tmp_component)
-            tag = tmp_virtual_node.tag
-          }
-          let array = elements_by_tag[tag]
-          if (array) dom_child = array.shift()
+          while (typeof virtual_child.tag !== "string")
+            virtual_child = render(instantiate(virtual_child))
+          let nodes = nodes_by_tag[virtual_child.tag]
+          if (nodes) dom_child = nodes.shift()
         }
       }
       if (dom_child) { // morph dom_child to match virtual_child (recursively)
-        merged_children.push(merge(virtual_child, dom_child))
+        merged_children.push(merge(virtual_child, dom_child, force_deep))
       } else { // no suitable dom_child found -> create one (recursively)
         merged_children.push(create(virtual_child))
       }
@@ -171,7 +171,7 @@ export function merge(virtual_node, dom_node) {
   // 3) remove orphaned children
   for (let t in text_nodes) removeDomNode(text_nodes[t])
   for (let k in nodes_by_key) removeDomNode(nodes_by_key[k])
-  for (let t in elements_by_tag) for (let e in elements_by_tag[t]) removeDomNode(elements_by_tag[t][e])
+  for (let t in nodes_by_tag) for (let e in nodes_by_tag[t]) removeDomNode(nodes_by_tag[t][e])
   return dom_node
 }
 
@@ -202,20 +202,6 @@ export class Component {
         if (c._element) merge(render(c), c._element)
       }
     })
-  }
-
-  /**
-   * Internal: Receives new properties
-   * Returns whether the Component *should* update afterwards
-   * @param {null|Object} attributes
-   * @param {null|VirtualNode[]} children
-   * @returns {boolean}
-   */
-  setProperties(attributes, children) {
-    let shall_update = false//!equals(attributes, this._attributes) || !equals(children, this._children)
-    this._attributes = attributes
-    this._children = children
-    return shall_update
   }
 
   /**
